@@ -85,6 +85,14 @@ function applyEffect(@wearer) { return function(@effect) {
 	}
 };}
 
+function addEffect(@buff) { return function(@wearer) { return function(@effect) {
+	var item_id = effect[5];
+	if (buff) {
+		wearer['EFFS'] =@ aFilter(function(@eff) {return eff[5] === item_id; })(wearer['EFFS']);
+	}
+	push(wearer['EFFS'], effect);
+};};}
+
 function removeEffect(@wearer) { return function(@effect) {
 	var type = effect[0];
 	if (type === EFFECT_ABSOLUTE_SHIELD) {
@@ -154,6 +162,14 @@ function atk(@dmg, @ls, @target, @caster) {
 	caster["HP"] = heal(ls * effDmg, caster);
 }
 
+function removeDead(@state) { return function(@target) {
+	if (target['HP'] <= 0) {
+		removeElement(state['allies'], target['ID']);
+		removeElement(state['enemies'], target['ID']);
+		removeElement(state['all'], target);
+	}
+};}
+
 global ITEMS_EFFECT = [
 WEAPON_AXE : function(@state, @caster, @center) {
 	var dmg = rawEff(60.5, caster["STR"]);
@@ -164,6 +180,7 @@ WEAPON_AXE : function(@state, @caster, @center) {
 			atk(dmg, ls, target, caster);
 			target["MP"] -= shack(target);
 			target["TMP"] -= shack(target);
+			removeDead(state)(target);
 		}
 	};}
 WEAPON_B_LASER : WEAPON_B_LASER,
@@ -175,6 +192,7 @@ WEAPON_BROADSWORD : function(@state, @caster, @center) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
 			target["TP"] -= shack(target);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_DESTROYER : function(@state, @caster, @center) {
@@ -185,6 +203,7 @@ WEAPON_DESTROYER : function(@state, @caster, @center) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
 			target["STR"] -= shack(target);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_DOUBLE_GUN : function(@state, @caster, @center) {
@@ -195,6 +214,7 @@ WEAPON_DOUBLE_GUN : function(@state, @caster, @center) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
 			atk(dmg2, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_ELECTRISOR : function(@state, @caster, @center) {
@@ -203,6 +223,7 @@ WEAPON_ELECTRISOR : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_FLAME_THROWER : WEAPON_FLAME_THROWER,
@@ -214,12 +235,15 @@ WEAPON_GRENADE_LAUNCHER : function(@state, @caster, @center) {
 		var tgt = target["POS"];
 		if (center == tgt) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 1) {
 			atk(dmg * 0.75, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 2) {
 			atk(dmg * 0.5, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_KATANA : WEAPON_KATANA,
@@ -233,6 +257,7 @@ WEAPON_LASER : function(@state, @caster, @center) {
 		var tgt = target["POS"];
 		if (codir(tgt) && inRange(WEAPON_LASER)(pos)(tgt) && lineOfSight(pos, tgt, all_id)) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_MACHINE_GUN : function(@state, @caster, @center) {
@@ -241,6 +266,7 @@ WEAPON_MACHINE_GUN : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_MAGNUM : function(@state, @caster, @center) {
@@ -249,6 +275,7 @@ WEAPON_MAGNUM : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_M_LASER : WEAPON_M_LASER,
@@ -258,6 +285,7 @@ WEAPON_PISTOL : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 WEAPON_SHOTGUN : function(@state, @caster, @center) {
@@ -266,6 +294,7 @@ WEAPON_SHOTGUN : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_ACCELERATION : CHIP_ACCELERATION,
@@ -276,6 +305,7 @@ CHIP_ARMOR : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			target["ASH"] += sh;
+			addEffect(true)(target)([EFFECT_ABSOLUTE_SHIELD, sh, caster['ID'], 4, false, CHIP_ARMOR, target['ID']]);
 		}
 	};},
 CHIP_ARMORING : function(@state, @caster, @center) {
@@ -311,6 +341,7 @@ CHIP_DOPING : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			target["STR"] += buff;
+			addEffect(true)(target)([EFFECT_BUFF_STRENGTH, buff, caster['ID'], 4, false, CHIP_DOPING, target['ID']]);
 		}
 	};},
 CHIP_DRIP : function(@state, @caster, @center) {
@@ -336,6 +367,7 @@ CHIP_FLAME : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_FLASH : function(@state, @caster, @center) {
@@ -345,16 +377,19 @@ CHIP_FLASH : function(@state, @caster, @center) {
 		var tgt = target["POS"];
 		if (center == tgt) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 1) {
 			atk(dmg * 0.5, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_FORTRESS : function(@state, @caster, @center) {
-	var sh = rawEff(0.095, caster["RES"]);
+	var sh = rawEff(9, caster["RES"]);
 	return function(@target) {
 		if (center == target["POS"]) {
 			target["RSH"] += sh;
+			addEffect(true)(target)([EFFECT_RELATIVE_SHIELD, sh, caster['ID'], 3, false, CHIP_FORTRESS, target['ID']]);
 		}
 	};},
 CHIP_FRACTURE : CHIP_FRACTURE,
@@ -364,6 +399,7 @@ CHIP_HELMET : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			target["ASH"] += sh;
+			addEffect(true)(target)([EFFECT_ABSOLUTE_SHIELD, sh, caster['ID'], 4, false, CHIP_HELMET, target['ID']]);
 		}
 	};},
 CHIP_ICE : function(@state, @caster, @center) {
@@ -372,6 +408,7 @@ CHIP_ICE : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_ICEBERG : function(@state, @caster, @center) {
@@ -381,12 +418,15 @@ CHIP_ICEBERG : function(@state, @caster, @center) {
 		var tgt = target["POS"];
 		if (center == tgt) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 1) {
 			atk(dmg * 0.75, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 2) {
 			atk(dmg * 0.5, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_ICED_BULB : CHIP_ICED_BULB,
@@ -397,6 +437,7 @@ CHIP_LEATHER_BOOTS : function(@state, @caster, @center) {
 		if (center == target["POS"]) {
 			target["TMP"] += buff;
 			target["MP"] += buff;
+			addEffect(true)(target)([EFFECT_BUFF_MP, buff, caster['ID'], 2, false, CHIP_LEATHER_BOOTS, target['ID']]);
 		}
 	};},
 CHIP_LIBERATION : function(@state, @caster, @center) {
@@ -416,12 +457,15 @@ CHIP_LIGHTNING : function(@state, @caster, @center) {
 		}
 		else if (center === tgt) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 1) {
 			atk(dmg * 0.75, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 2) {
 			atk(dmg * 0.5, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_LIGHTNING_BULB : CHIP_LIGHTNING_BULB,
@@ -434,12 +478,15 @@ CHIP_METEORITE : function(@state, @caster, @center) {
 		var tgt = target["POS"];
 		if (center == tgt) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 1) {
 			atk(dmg * 0.75, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 2) {
 			atk(dmg * 0.5, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_MIRROR : CHIP_MIRROR,
@@ -449,6 +496,7 @@ CHIP_MOTIVATION : function(@state, @caster, @center) {
 		if (center == target["POS"]) {
 			target["TTP"] += buff;
 			target["TP"] += buff;
+			addEffect(true)(target)([EFFECT_BUFF_TP, buff, caster['ID'], 2, false, CHIP_MOTIVATION, target['ID']]);
 		}
 	};},
 CHIP_PEBBLE : function(@state, @caster, @center) {
@@ -457,10 +505,18 @@ CHIP_PEBBLE : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_PLAGUE : CHIP_PLAGUE,
-CHIP_PROTEIN : function(@state, @_, @__) { return id; },
+CHIP_PROTEIN : function(@state, @caster, @center) {
+	var buff = rawEff(32.5, caster["SCI"]);
+	return function(@target) {
+		if (center == target["POS"]) {
+			target["STR"] += buff;
+			addEffect(true)(target)([EFFECT_BUFF_STRENGTH, buff, caster['ID'], 2, false, CHIP_PROTEIN, target['ID']]);
+		}
+	};},
 CHIP_PUNY_BULB : CHIP_PUNY_BULB,
 CHIP_RAGE : CHIP_RAGE,
 CHIP_RAMPART : function(@state, @caster, @center) {
@@ -468,6 +524,7 @@ CHIP_RAMPART : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			target["RSH"] += sh;
+			addEffect(true)(target)([EFFECT_RELATIVE_SHIELD, sh, caster['ID'], 3, false, CHIP_RAMPART, target['ID']]);
 		}
 	};}
 CHIP_REFLEXES : CHIP_REFLEXES,
@@ -480,6 +537,7 @@ CHIP_ROCK : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_ROCKFALL : function(@state, @caster, @center) {
@@ -489,12 +547,15 @@ CHIP_ROCKFALL : function(@state, @caster, @center) {
 		var tgt = target["POS"];
 		if (center == tgt) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 1) {
 			atk(dmg * 0.75, ls, target, caster);
+			removeDead(state)(target);
 		}
 		else if (getCellDistance(center, tgt) === 2) {
 			atk(dmg * 0.5, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_ROCKY_BULB : CHIP_ROCKY_BULB,
@@ -504,6 +565,7 @@ CHIP_SHIELD : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			target["ASH"] += sh;
+			addEffect(true)(target)([EFFECT_ABSOLUTE_SHIELD, sh, caster['ID'], 3, false, CHIP_SHIELD, target['ID']]);
 		}
 	};},
 CHIP_SHOCK : function(@state, @caster, @center) {
@@ -512,6 +574,7 @@ CHIP_SHOCK : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_SLOW_DOWN : CHIP_SLOW_DOWN,
@@ -523,6 +586,7 @@ CHIP_SPARK : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_STALACTITE : function(@state, @caster, @center) {
@@ -531,6 +595,7 @@ CHIP_STALACTITE : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
 		}
 	};},
 CHIP_STEROID : CHIP_STEROID,
@@ -546,7 +611,7 @@ CHIP_VACCINE : function(@state, @caster, @center) {
 	var rheal = rawEff(40, caster["WIS"]);
 	return function(@target) {
 		if (center == target["POS"]) {
-			push(target['EFFS'], [EFFECT_HEAL, rheal, caster['ID'], 3, false, CHIP_VACCINE, target['ID']]);
+			addEffect(true)(target)([EFFECT_HEAL, rheal, caster['ID'], 3, false, CHIP_VACCINE, target['ID']]);
 		}
 	};},
 CHIP_VENOM : CHIP_VENOM,
@@ -555,6 +620,7 @@ CHIP_WALL : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target["POS"]) {
 			target["RSH"] += sh;
+			addEffect(true)(target)([EFFECT_RELATIVE_SHIELD, sh, caster['ID'], 2, false, CHIP_WALL, target['ID']]);
 		}
 	};},
 CHIP_WARM_UP : CHIP_WARM_UP,

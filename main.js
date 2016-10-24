@@ -124,42 +124,51 @@ function sumState(@all, @ls, @stat) {
 
 function applyEffects(@wearer) {
 	aIter(applyEffect(wearer))(wearer['EFFS']);
+	return wearer;
 }
 
 function evaluateState(o) {
 	var os =@ o["all"];
-	aIter(applyEffects)(os);
+	aIter(compose(removeDead(os))(applyEffects))(os);
 	var oeLifes = sumState(os, o["enemies"], "HP");
+	var oeAlives = count(o['enemies']);
 	var oaLifes = sumState(os, o["allies"], "HP");
-	var oASH = 1 + sumState(os, o['allies'], 'ASH');
-	var oRSH = 1 + sumState(os, o['allies'], 'RSH');
+	var oaAlives = count(o['allies']);
+	var oASH = sumState(os, o['allies'], 'ASH');
+	var oRSH = sumState(os, o['allies'], 'RSH');
 	var oSTR = sumState(os, o['allies'], 'STR');
 	var oeTTP = sumState(os, o["enemies"], "TTP");
 	var oeTMP = sumState(os, o["enemies"], "TMP");
 	var oaTTP = sumState(os, o["allies"], "TTP");
 	var oaTMP = sumState(os, o["allies"], "TMP");
+	var oneOr = defaultDiv(1);
+	var thousandOr = defaultDiv(1000);
 	return memo1(function(@x) {
 		var xs =@ x["all"];
 		aIter(applyEffects)(xs);
 		var xeLifes = sumState(xs, x["enemies"], "HP");
+		var xeAlives = count(x['enemies']);
 		var xaLifes = sumState(xs, x["allies"], "HP");
+		var xaAlives = count(x['allies']);
 		var xeTTP = sumState(xs, x["enemies"], "TTP");
 		var xeTMP = sumState(xs, x["enemies"], "TMP");
 		var xaTTP = sumState(xs, x["allies"], "TTP");
 		var xaTMP = sumState(xs, x["allies"], "TMP");
-		var xASH = 1 + sumState(xs, x['allies'], 'ASH');
-		var xRSH = 1 + sumState(xs, x['allies'], 'RSH');
+		var xASH = sumState(xs, x['allies'], 'ASH');
+		var xRSH = sumState(xs, x['allies'], 'RSH');
 		var xSTR = sumState(xs, x['allies'], 'STR');
 		var getDist = function(@e) {
 			return getPathLength(xs[GLOBAL_LEEK_ID]["POS"], xs[e]["POS"]);
 			};
 		var xDist = arrayMin(aMap(getDist)(x["enemies"]));
-		xDist =@ max(1, (10000 + max(8, abs(xs[GLOBAL_LEEK_ID]["TMP"] - xDist))) / 10000);
+		xDist =@ max(1, (10000 + max(0, xDist - 7 - getSelf(x)['TMP'])) / 10000);
 		return xDist
 			 * (xeLifes / oeLifes)
-			 * (oaLifes / xaLifes)
-			 * (oASH / xASH)
-			 * (oRSH / xRSH)
+			 * (xeAlives / oeAlives)
+			 * thousandOr(oaLifes)(xaLifes)
+			 * thousandOr(oaAlives)(xaAlives)
+			 * oneOr(oASH)(xASH)
+			 * oneOr(oRSH)(xRSH)
 			 * (oSTR / xSTR)
 			 * (xeTTP / oeTTP)
 			 * (xeTMP / oeTMP)
