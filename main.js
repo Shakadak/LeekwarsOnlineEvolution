@@ -216,7 +216,9 @@ function main() {
 		totalPop++;
 		popInsert(value, actions["actions"]);
 	}
-	aIter(yield)(popSelect());
+	var elected = popSelect();
+	debugC('action count: ' + count(elected), COLOR_GREEN);
+	aIter(yield)(elected);
 }
 debug(getOperations() + 'op');
 debug("totalPop: " + totalPop);
