@@ -85,7 +85,7 @@ function getAction(@gameState) {
 	var itemList =@ getActionListFromState(gameState);
 	return aMap(delay(function(@item) {
 		var target = getRandomTarget(gameState, item);
-		if (target === null) { return void; }
+		if (target === null) { return [delay0(void)]; }
 		var ret = [];
 		var cost = getItemCost(item);
 		if (isWeapon(item) && item !== gameState["equipped"]) {
@@ -95,12 +95,14 @@ function getAction(@gameState) {
 		}
 		updateState(getSelf(gameState)["TP"])(subTo(cost));
 		aIter(ITEMS_EFFECT[item](gameState, getSelf(gameState), target))(gameState["all"]);
-		if (isChip(item) && getChipCooldown(item) !== 0) { removeElement(gameState["chips"], item); }
+		if (isChip(item) && getChipCooldown(item) !== 0) {
+			removeElement(gameState["chips"], item);
+		}
 		push(ret, delay(compose(useItemOnCell(item))(function(x){
 				//mark(x, BEST_COLOR);
 				//debug(getItemName(item) + " -> " + target);
 				return x;
-		}))(target));
+			}))(target));
 		return ret;
 	}))(itemList);
 }
@@ -129,7 +131,7 @@ function applyEffects(@wearer) {
 
 function evaluateState(o) {
 	var os =@ o["all"];
-	aIter(compose(removeDead(os))(applyEffects))(os);
+	aIter(compose(removeDead(o))(applyEffects))(os);
 	var oeLifes = sumState(os, o["enemies"], "HP");
 	var oeAlives = count(o['enemies']);
 	var oaLifes = sumState(os, o["allies"], "HP");
@@ -143,9 +145,11 @@ function evaluateState(o) {
 	var oaTMP = sumState(os, o["allies"], "TMP");
 	var oneOr = defaultDiv(1);
 	var thousandOr = defaultDiv(1000);
+	var infDiv = defaultDiv(-log(0));
+	var ninfDiv = defaultDiv(log(0));
 	return memo1(function(@x) {
 		var xs =@ x["all"];
-		aIter(applyEffects)(xs);
+		aIter(compose(removeDead(x))(applyEffects))(xs);
 		var xeLifes = sumState(xs, x["enemies"], "HP");
 		var xeAlives = count(x['enemies']);
 		var xaLifes = sumState(xs, x["allies"], "HP");
@@ -163,17 +167,17 @@ function evaluateState(o) {
 		var xDist = arrayMin(aMap(getDist)(x["enemies"]));
 		xDist =@ max(1, (10000 + max(0, xDist - 7 - getSelf(x)['TMP'])) / 10000);
 		return xDist
-			 * (xeLifes / oeLifes)
-			 * (xeAlives / oeAlives)
-			 * thousandOr(oaLifes)(xaLifes)
-			 * thousandOr(oaAlives)(xaAlives)
+			 * ninfDiv(xeLifes)(oeLifes)
+			 * ninfDiv(xeAlives)(oeAlives)
+			 * infDiv(oaLifes)(xaLifes)
+			 * infDiv(oaAlives)(xaAlives)
 			 * oneOr(oASH)(xASH)
 			 * oneOr(oRSH)(xRSH)
-			 * (oSTR / xSTR)
-			 * (xeTTP / oeTTP)
-			 * (xeTMP / oeTMP)
-			 * (oaTTP / xaTTP)
-			 * (oaTMP / xaTMP);
+			 * infDiv(oSTR)(xSTR)
+			 * ninfDiv(xeTTP)(oeTTP)
+			 * ninfDiv(xeTMP)(oeTMP)
+			 * infDiv(oaTTP)(xaTTP)
+			 * infDiv(oaTMP)(xaTMP);
 	});
 }
 
@@ -208,7 +212,7 @@ function main() {
 	while (getOperations() < 19000000) {
 		var actions =@ getActions(gameState);
 		var value = evaluate(actions["state"]);
-		if (checkSafeCell(actions['state']['all'][GLOBAL_LEEK_ID]['POS'])) {
+		if (checkSafeCell(getSelf(actions['state'])['POS'])) {
 			value *= safeMod;
 		}
 	//	if (existing["" + actions["state"]])	{ continue; }

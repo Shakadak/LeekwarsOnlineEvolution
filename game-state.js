@@ -162,7 +162,9 @@ function atk(@dmg, @ls, @target, @caster) {
 	caster["HP"] = heal(ls * effDmg, caster);
 }
 
-function removeDead(@state) { return function(@target) {
+function removeDead(@state) {
+	//debug("[removeDead] state: " + state);
+	return function(@target) {
 	if (target['HP'] <= 0) {
 		removeElement(state['allies'], target['ID']);
 		removeElement(state['enemies'], target['ID']);
@@ -183,7 +185,11 @@ WEAPON_AXE : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};}
-WEAPON_B_LASER : WEAPON_B_LASER,
+WEAPON_B_LASER : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(WEAPON_B_LASER);
+	};},
 WEAPON_BROADSWORD : function(@state, @caster, @center) {
 	var dmg = rawEff(40, caster["STR"]);
 	var shack = shackle(0.35, caster);
@@ -226,8 +232,16 @@ WEAPON_ELECTRISOR : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-WEAPON_FLAME_THROWER : WEAPON_FLAME_THROWER,
-WEAPON_GAZOR : WEAPON_GAZOR,
+WEAPON_FLAME_THROWER : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(WEAPON_FLAME_THROWER);
+	};},
+WEAPON_GAZOR : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(WEAPON_GAZOR);
+	};},
 WEAPON_GRENADE_LAUNCHER : function(@state, @caster, @center) {
 	var dmg = rawEff(49, caster["STR"]);
 	var ls = caster["WIS"] / 1000;
@@ -246,7 +260,11 @@ WEAPON_GRENADE_LAUNCHER : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-WEAPON_KATANA : WEAPON_KATANA,
+WEAPON_KATANA : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(WEAPON_KATANA);
+	};},
 WEAPON_LASER : function(@state, @caster, @center) {
 	var dmg = rawEff(51, caster["STR"]);
 	var ls = caster["WIS"] / 1000;
@@ -278,7 +296,11 @@ WEAPON_MAGNUM : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-WEAPON_M_LASER : WEAPON_M_LASER,
+WEAPON_M_LASER : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(WEAPON_M_LASER);
+	};},
 WEAPON_PISTOL : function(@state, @caster, @center) {
 	var dmg = rawEff(17.5, caster["STR"]);
 	var ls = caster["WIS"] / 1000;
@@ -297,9 +319,21 @@ WEAPON_SHOTGUN : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_ACCELERATION : CHIP_ACCELERATION,
-CHIP_ADRENALINE : CHIP_ADRENALINE,
-CHIP_ANTIDOTE : CHIP_ANTIDOTE,
+CHIP_ACCELERATION : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_ACCELERATION);
+	};},
+CHIP_ADRENALINE : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_ADRENALINE);
+	};},
+CHIP_ANTIDOTE : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_ANTIDOTE);
+	};},
 CHIP_ARMOR : function(@state, @caster, @center) {
 	var sh = rawEff(25, caster["RES"]);
 	return function(@target) {
@@ -316,7 +350,11 @@ CHIP_ARMORING : function(@state, @caster, @center) {
 			target["HP"] += boost;
 		}
 	};},
-CHIP_BALL_AND_CHAIN : CHIP_BALL_AND_CHAIN,
+CHIP_BALL_AND_CHAIN : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_BALL_AND_CHAIN);
+	};},
 CHIP_BANDAGE : function(@state, @caster, @center) {
 	var rheal = rawEff(12.5, caster["WIS"]);
 	return function(@target) {
@@ -324,10 +362,26 @@ CHIP_BANDAGE : function(@state, @caster, @center) {
 			target["HP"] = heal(rheal, target);
 		}
 	};},
-CHIP_BARK : CHIP_BARK,
-CHIP_BURNING : CHIP_BURNING,
-CHIP_CARAPACE : CHIP_CARAPACE,
-CHIP_COLLAR : CHIP_COLLAR,
+CHIP_BARK : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_BARK);
+	};},
+CHIP_BURNING : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_BURNING);
+	};},
+CHIP_CARAPACE : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_CARAPACE);
+	};},
+CHIP_COLLAR : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_COLLAR);
+	};},
 CHIP_CURE : function(@state, @caster, @center) {
 	var rheal = rawEff(39, caster["WIS"]);
 	return function(@target) {
@@ -335,7 +389,11 @@ CHIP_CURE : function(@state, @caster, @center) {
 			target["HP"] = heal(rheal, target);
 		}
 	};},
-CHIP_DEVIL_STRIKE : CHIP_DEVIL_STRIKE,
+CHIP_DEVIL_STRIKE : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_DEVIL_STRIKE);
+	};},
 CHIP_DOPING : function(@state, @caster, @center) {
 	var buff = rawEff(42.5, caster["SCI"]);
 	return function(@target) {
@@ -358,9 +416,21 @@ CHIP_DRIP : function(@state, @caster, @center) {
 			target["HP"] = heal(rheal * 0.5, target);
 		}
 	};},
-CHIP_FEROCITY : CHIP_FEROCITY,
-CHIP_FERTILIZER : CHIP_FERTILIZER,
-CHIP_FIRE_BULB : CHIP_FIRE_BULB,
+CHIP_FEROCITY : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_FEROCITY);
+	};},
+CHIP_FERTILIZER : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_FERTILIZER);
+	};},
+CHIP_FIRE_BULB : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_FIRE_BULB);
+	};},
 CHIP_FLAME : function(@state, @caster, @center) {
 	var dmg = rawEff(26, caster["STR"]);
 	var ls = caster["WIS"] / 1000;
@@ -392,8 +462,16 @@ CHIP_FORTRESS : function(@state, @caster, @center) {
 			addEffect(true)(target)([EFFECT_RELATIVE_SHIELD, sh, caster['ID'], 3, false, CHIP_FORTRESS, target['ID']]);
 		}
 	};},
-CHIP_FRACTURE : CHIP_FRACTURE,
-CHIP_HEALER_BULB : CHIP_HEALER_BULB,
+CHIP_FRACTURE : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_FRACTURE);
+	};},
+CHIP_HEALER_BULB : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_HEALER_BULB);
+	};},
 CHIP_HELMET : function(@state, @caster, @center) {
 	var sh = rawEff(15, caster["RES"]);
 	return function(@target) {
@@ -429,8 +507,16 @@ CHIP_ICEBERG : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_ICED_BULB : CHIP_ICED_BULB,
-CHIP_INVERSION : CHIP_INVERSION,
+CHIP_ICED_BULB : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_ICED_BULB);
+	};},
+CHIP_INVERSION : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_INVERSION);
+	};},
 CHIP_LEATHER_BOOTS : function(@state, @caster, @center) {
 	var buff = round(rawEff(0.45, caster["SCI"]));
 	return function(@target) {
@@ -468,9 +554,21 @@ CHIP_LIGHTNING : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_LIGHTNING_BULB : CHIP_LIGHTNING_BULB,
-CHIP_LOAM : CHIP_LOAM,
-CHIP_METALLIC_BULB : CHIP_METALLIC_BULB,
+CHIP_LIGHTNING_BULB : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_LIGHTNING_BULB);
+	};},
+CHIP_LOAM : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_LOAM);
+	};},
+CHIP_METALLIC_BULB : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_METALLIC_BULB);
+	};},
 CHIP_METEORITE : function(@state, @caster, @center) {
 	var dmg = rawEff(75, caster["STR"]);
 	var ls = caster["WIS"] / 1000;
@@ -489,7 +587,11 @@ CHIP_METEORITE : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_MIRROR : CHIP_MIRROR,
+CHIP_MIRROR : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_MIRROR);
+	};},
 CHIP_MOTIVATION : function(@state, @caster, @center) {
 	var buff = round(rawEff(0.45, caster["SCI"]));
 	return function(@target) {
@@ -508,7 +610,11 @@ CHIP_PEBBLE : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_PLAGUE : CHIP_PLAGUE,
+CHIP_PLAGUE : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_PLAGUE);
+	};},
 CHIP_PROTEIN : function(@state, @caster, @center) {
 	var buff = rawEff(32.5, caster["SCI"]);
 	return function(@target) {
@@ -517,8 +623,16 @@ CHIP_PROTEIN : function(@state, @caster, @center) {
 			addEffect(true)(target)([EFFECT_BUFF_STRENGTH, buff, caster['ID'], 2, false, CHIP_PROTEIN, target['ID']]);
 		}
 	};},
-CHIP_PUNY_BULB : CHIP_PUNY_BULB,
-CHIP_RAGE : CHIP_RAGE,
+CHIP_PUNY_BULB : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_PUNY_BULB);
+	};},
+CHIP_RAGE : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_RAGE);
+	};},
 CHIP_RAMPART : function(@state, @caster, @center) {
 	var sh = rawEff(0.075, caster["RES"]);
 	return function(@target) {
@@ -527,10 +641,26 @@ CHIP_RAMPART : function(@state, @caster, @center) {
 			addEffect(true)(target)([EFFECT_RELATIVE_SHIELD, sh, caster['ID'], 3, false, CHIP_RAMPART, target['ID']]);
 		}
 	};}
-CHIP_REFLEXES : CHIP_REFLEXES,
-CHIP_REGENERATION : function(@state, @_, @__) { return id; },
-CHIP_REMISSION : CHIP_REMISSION,
-CHIP_RESURRECTION : CHIP_RESURRECTION,
+CHIP_REFLEXES : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_REFLEXES);
+	};},
+CHIP_REGENERATION : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_REGENERATION);
+	};},
+CHIP_REMISSION : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_REMISSION);
+	};},
+CHIP_RESURRECTION : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_RESURRECTION);
+	};},
 CHIP_ROCK : function(@state, @caster, @center) {
 	var dmg = rawEff(31.5, caster["STR"]);
 	var ls = caster["WIS"] / 1000;
@@ -558,8 +688,20 @@ CHIP_ROCKFALL : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_ROCKY_BULB : CHIP_ROCKY_BULB,
-CHIP_SEVEN_LEAGUE_BOOTS : CHIP_SEVEN_LEAGUE_BOOTS,
+CHIP_ROCKY_BULB : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_ROCKY_BULB);
+	};},
+CHIP_SEVEN_LEAGUE_BOOTS : function(@state, @caster, @center) {
+	var buff = round(rawEff(0.55, caster["SCI"]));
+	return function(@target) {
+		if (center == target["POS"] && target["TYPE"] == ENTITY_LEEK) {
+			target["TMP"] += buff;
+			target["MP"] += buff;
+			addEffect(true)(target)([EFFECT_BUFF_MP, buff, caster['ID'], 4, false, CHIP_SEVEN_LEAGUE_BOOTS, target['ID']]);
+		}
+	};},
 CHIP_SHIELD : function(@state, @caster, @center) {
 	var sh = rawEff(20, caster["RES"]);
 	return function(@target) {
@@ -577,9 +719,24 @@ CHIP_SHOCK : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_SLOW_DOWN : CHIP_SLOW_DOWN,
-CHIP_SOLIDIFICATION : function(@state, @_, @__) { return id; },
-CHIP_SOPORIFIC : CHIP_SOPORIFIC,
+CHIP_SLOW_DOWN : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_SLOW_DOWN);
+	};},
+CHIP_SOLIDIFICATION : function(@state, @caster, @center) {
+	var buff = round(rawEff(55, caster["SCI"]));
+	return function(@target) {
+		if (center == target["POS"]) {
+			target["RES"] += buff;
+			addEffect(true)(target)([EFFECT_BUFF_RESISTANCE, buff, caster['ID'], 4, false, CHIP_SOLIDIFICATION, target['ID']]);
+		}
+	};},
+CHIP_SOPORIFIC : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_SOPORIFIC);
+	};},
 CHIP_SPARK : function(@state, @caster, @center) {
 	var dmg = rawEff(10, caster["STR"]);
 	var ls = caster["WIS"] / 1000;
@@ -598,15 +755,35 @@ CHIP_STALACTITE : function(@state, @caster, @center) {
 			removeDead(state)(target);
 		}
 	};},
-CHIP_STEROID : CHIP_STEROID,
-CHIP_STRETCHING : CHIP_STRETCHING,
+CHIP_STEROID : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_STEROID);
+	};},
+CHIP_STRETCHING : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_STRETCHING);
+	};},
 CHIP_TELEPORTATION : function(@state, @caster, @center) {
 	caster['POS'] = center;
 	return function(@target) {
 	};},
-CHIP_THORN : CHIP_THORN,
-CHIP_TOXIN : CHIP_TOXIN,
-CHIP_TRANQUILIZER : CHIP_TRANQUILIZER,
+CHIP_THORN : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_THORN);
+	};},
+CHIP_TOXIN : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_TOXIN);
+	};},
+CHIP_TRANQUILIZER : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_TRANQUILIZER);
+	};},
 CHIP_VACCINE : function(@state, @caster, @center) {
 	var rheal = rawEff(40, caster["WIS"]);
 	return function(@target) {
@@ -614,7 +791,11 @@ CHIP_VACCINE : function(@state, @caster, @center) {
 			addEffect(true)(target)([EFFECT_HEAL, rheal, caster['ID'], 3, false, CHIP_VACCINE, target['ID']]);
 		}
 	};},
-CHIP_VENOM : CHIP_VENOM,
+CHIP_VENOM : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_VENOM);
+	};},
 CHIP_WALL : function(@state, @caster, @center) {
 	var sh = rawEff(0.055, caster["RES"]);
 	return function(@target) {
@@ -623,7 +804,19 @@ CHIP_WALL : function(@state, @caster, @center) {
 			addEffect(true)(target)([EFFECT_RELATIVE_SHIELD, sh, caster['ID'], 2, false, CHIP_WALL, target['ID']]);
 		}
 	};},
-CHIP_WARM_UP : CHIP_WARM_UP,
-CHIP_WHIP : CHIP_WHIP,
-CHIP_WINGED_BOOTS : CHIP_WINGED_BOOTS,
+CHIP_WARM_UP : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_WARM_UP);
+	};},
+CHIP_WHIP : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_WHIP);
+	};},
+CHIP_WINGED_BOOTS : function(@state, @caster, @center) {
+	return function(@target) {
+		compose(function(@name) { debugE("Item " + name + " not implemented."); })
+				(getItemName)(CHIP_WINGED_BOOTS);
+	};},
 ];
