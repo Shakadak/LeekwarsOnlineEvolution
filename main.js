@@ -164,9 +164,12 @@ function evaluateState(o) {
 		var getDist = function(@e) {
 			return getPathLength(xs[GLOBAL_LEEK_ID]["POS"], xs[e]["POS"]);
 			};
-		var xDist = arrayMin(aMap(getDist)(x["enemies"]));
-		xDist =@ max(1, (10000 + max(0, xDist - 7 - getSelf(x)['TMP'])) / 10000);
-		return xDist
+		var xeDist = arrayMin(aMap(getDist)(x["enemies"]));
+		xeDist =@ max(1, (10000 + max(0, xeDist - 7 - getSelf(x)['TMP'])) / 10000);
+		var xaDist = arrayMin(aMap(getDist)(x["allies"]));
+		xaDist =@ max(1, (10000 + max(0, xaDist - 7 - getSelf(x)['TMP'])) / 10000);
+		return xeDist
+			 * xaDist
 			 * ninfDiv(xeLifes)(oeLifes)
 			 * ninfDiv(xeAlives)(oeAlives)
 			 * infDiv(oaLifes)(xaLifes)
