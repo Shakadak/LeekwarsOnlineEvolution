@@ -34,6 +34,7 @@ function getEntityState(e) {
 			, "RES"	: getResistance(e)
 			, "ASH"	: getAbsoluteShield(e)
 			, "RSH"	: getRelativeShield(e)
+			, "RET" : getDamageReturn(e)
 			, "POS"	: getCell(e)
 			, "TYPE": getType(e)
 			, "EFFS": getEffects(e)
@@ -135,6 +136,9 @@ function removeEffect(@wearer) { return function(@effect) {
 		wearer['TTP'] += effect[1];
 		wearer['TP'] += effect[1];
 	}
+	else if (type === EFFECT_DAMAGE_RETURN) {
+		wearer['RET'] -= effect[1];
+	}
 };}
 
 function rawEff(@base, @stat) {
@@ -160,6 +164,7 @@ function atk(@dmg, @ls, @target, @caster) {
 	var effDmg = damage(dmg, target);
 	target["HP"] -= effDmg;
 	caster["HP"] = heal(ls * effDmg, caster);
+	caster["HP"] -= dmg * target['RET'] / 100;
 }
 
 function removeDead(@state) {
