@@ -42,17 +42,26 @@ function getEntityState(e) {
 			, "A" + AREA_POINT		: getApplicableArea(AREA_POINT)(getCell(e))
 			, "A" +	AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(getCell(e))
 			, "A" +	AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(getCell(e))
-			, "A" +	AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(getCell(e)) ];
+			, "A" +	AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(getCell(e))
+			];
 }
 
 function getSelf(@state) {return state["all"][state["self"]];}
 
 function getActionListFromState(@s) {
 	var tp =@ getSelf(s)["TP"];
+	var thp =@ getSelf(s)['THP'];
+	var hp =@ getSelf(s)['HP'];
 	var eq =@ s["equipped"];
 	var fWeap =@ function(@w) { return tp >= getWeaponCost(w) + (eq != w); };
 	var weapons =@ aFilter(fWeap)(s["weapons"]);
-	var fChip =@ function(@c) { return tp >= getChipCost(c); };
+	var fChip =@ function(@c) {
+		if (c === CHIP_REGENERATION) {
+			if (!(hp < 150 || hp / thp < 0.4)) {
+				return false;
+			}
+		}
+		return tp >= getChipCost(c); };
 	var chips =@ aFilter(fChip)(s["chips"]);
 	return	weapons + chips;
 }
@@ -652,9 +661,11 @@ CHIP_REFLEXES : function(@state, @caster, @center) {
 				(getItemName)(CHIP_REFLEXES);
 	};},
 CHIP_REGENERATION : function(@state, @caster, @center) {
+	var rheal = rawEff(200, caster["WIS"]);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_REGENERATION);
+		if (center == target["POS"]) {
+			target["HP"] = heal(rheal, target);
+		}
 	};},
 CHIP_REMISSION : function(@state, @caster, @center) {
 	return function(@target) {
