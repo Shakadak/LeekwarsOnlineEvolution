@@ -30,7 +30,7 @@ function getRandomTarget(@state, @item) {
 		var states =@ state[S_ALL];
 		var validTargets =@ (isWeapon(item) || cAttaques[item] || cDebuffs[item] || cPoisons[item]	? state[S_ENEMIES]
 							: state[S_ALLIES]);
-		validCells =@ aConcatMap(function(@x){return isSummon(x) && getName(x) == 'puny_bulb' ? [] : states[x]["A"+area];})(validTargets);
+		validCells =@ aConcatMap(function(@x){return isSummon(x) && getName(x) == 'puny_bulb' ? [] : states[x][area];})(validTargets);
 	}
 	shuffle(validCells);
 	var target;

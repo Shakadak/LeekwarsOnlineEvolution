@@ -35,10 +35,6 @@ global EQ = "EQ";
 global UNEQ = 'UNEQ';
 global ID = "ID";
 global ORDER = "ORDER";
-global A0 = "A" + AREA_POINT;
-global A1 = "A" +	AREA_CIRCLE_1;
-global A2 = "A" +	AREA_CIRCLE_2;
-global A3 = "A" + AREA_CIRCLE_3;
 global ALLY = "ALLY";
 global ENEMY = "ENEMY";
 global SUMMON = "SUMMON";
@@ -90,10 +86,10 @@ function getEntityState(e) {
 			, UNEQ: unequipped
 			, ID	: e
 			, ORDER	: getEntityTurnOrder(e)
-			, "A" + AREA_POINT		: getApplicableArea(AREA_POINT)(getCell(e))
-			, "A" +	AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(getCell(e))
-			, "A" +	AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(getCell(e))
-			, "A" +	AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(getCell(e))
+			, AREA_POINT		: getApplicableArea(AREA_POINT)(getCell(e))
+			, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(getCell(e))
+			, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(getCell(e))
+			, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(getCell(e))
 			, ALLY	: isAlly(e)
 			, ENEMY	: isEnemy(e)
 			, SUMMON	: isSummon(e)
@@ -645,10 +641,10 @@ CHIP_HEALER_BULB : function(@state, @caster, @center) {
 					, UNEQ: []
 					, ID	: new_id
 					, ORDER	: corder + 1
-					, 'A' + AREA_POINT		: getApplicableArea(AREA_POINT)(center)
-					, 'A' +	AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
-					, "A" +	AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
-					, "A" +	AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
+					, AREA_POINT		: getApplicableArea(AREA_POINT)(center)
+					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
+					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
+					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
 					, ALLY	: true
 					, ENEMY	: false
 					, SUMMON	: true
@@ -986,10 +982,10 @@ CHIP_STRETCHING : function(@state, @caster, @center) {
 	};},
 CHIP_TELEPORTATION : function(@state, @caster, @center) {
 	caster[POS] = center;
-	caster['A' + AREA_POINT] = [center];
-	caster['A' + AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(center);
-	caster['A' + AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(center);
-	caster['A' + AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(center);
+	caster[AREA_POINT] = [center];
+	caster[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(center);
+	caster[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(center);
+	caster[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(center);
 	return function(@target) {
 	};},
 CHIP_THORN : function(@state, @caster, @center) {
