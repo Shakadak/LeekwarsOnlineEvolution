@@ -18,8 +18,23 @@ global ACTIONS_QUEUE = [];
 
 main();
 
+function getTargets(@state, @item) {
+	var area = getItemArea(item);
+	var validCells = [];
+	var _getTargets =@ ITEMS_TARGETS[item];
+	if (typeOf(_getTargets) === TYPE_FUNCTION) {
+		validCells =@ _getTargets(state);
+	}
+	else {
+		var states =@ state[S_ALL];
+		var validTargets =@ (isWeapon(item) || cAttaques[item] || cDebuffs[item] || cPoisons[item]	? state[S_ENEMIES] : state[S_ALLIES]);
+		validCells =@ aConcatMap(function(@x){return (states[x][SUMMON] && states[x][NAME] == 'puny_bulb') ? [] : states[x][area];})(validTargets);
+	}
+	return validCells;
+}
+
+/*
 function getRandomTarget(@state, @item) {
-	//debugC(state, COLOR_BLUE);
 	var area = getItemArea(item);
 	var validCells = [];
 	var getTargets =@ ITEMS_TARGETS[item];
@@ -28,9 +43,8 @@ function getRandomTarget(@state, @item) {
 	}
 	else {
 		var states =@ state[S_ALL];
-		var validTargets =@ (isWeapon(item) || cAttaques[item] || cDebuffs[item] || cPoisons[item]	? state[S_ENEMIES]
-							: state[S_ALLIES]);
-		validCells =@ aConcatMap(function(@x){return isSummon(x) && getName(x) == 'puny_bulb' ? [] : states[x][area];})(validTargets);
+		var validTargets =@ (isWeapon(item) || cAttaques[item] || cDebuffs[item] || cPoisons[item]	? state[S_ENEMIES] : state[S_ALLIES]);
+		validCells =@ aConcatMap(function(@x){return (states[x][SUMMON] && states[x][NAME] == 'puny_bulb') ? [] : states[x][area];})(validTargets);
 	}
 	shuffle(validCells);
 	var target;
@@ -40,66 +54,71 @@ function getRandomTarget(@state, @item) {
 				&& !canTargetCell(item)(getSelf(state)[POS])(target));
 	return target;
 }
+*/
 
 function getMove(@gameState) {
 	if (getSelf(gameState)[MP] === 0) { return []; }
 	var moveList =@ getMovementListFromState(gameState);
-	return aMap(delay(function(@cell) {
+	return [aMap(delay(function(@cell) {
 		var moved = moveList["mcosts"][cell];
-		updateState(getSelf(gameState)[MP])(subTo(moved));
-		updateState(getSelf(gameState)[POS])(const(cell));
-		updateState(getSelf(gameState)["A1"])(const(getApplicableArea(AREA_POINT)(cell)));
-		updateState(getSelf(gameState)["A3"])(const(getApplicableArea(AREA_CIRCLE_1)(cell)));
-		updateState(getSelf(gameState)["A4"])(const(getApplicableArea(AREA_CIRCLE_2)(cell)));
-		updateState(getSelf(gameState)["A5"])(const(getApplicableArea(AREA_CIRCLE_3)(cell)));
+		getSelf(gameState)[MP] -= moved;
+		getSelf(gameState)[POS] = cell;
+		getSelf(gameState)[AREA_POINT] = getApplicableArea(AREA_POINT)(cell);
+		getSelf(gameState)[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(cell);
+		getSelf(gameState)[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(cell);
+		getSelf(gameState)[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
 		return [delay(compose(moveTowardCell)(function(x){
-			//mark(x, COLOR_YELLOW);
-			//debug("M -> " + x);
+			mark(x, COLOR_YELLOW);
+			debug("M -> " + x);
 			return x;
 		}))(cell)];
-	}))(moveList["moves"]);
+	}))(moveList["moves"])];
 }
 
 function getAction(@gameState) {
 	var itemList =@ getActionListFromState(gameState);
-	return aMap(delay(function(@item) {
-		var self =@ getSelf(gameState);
+	var self =@ getSelf(gameState);
+	var pos = self[POS];
+	return aMap(function(@item) {
 		//opsin();
-		var target = getRandomTarget(gameState, item);
+		var targets =@ getTargets(gameState, item);
 		//opsout('var target = getRandomTarget(gameState, item);', 0);
-		if (target === null) { return []; }
-		var ret = [];
-		var cost = getItemCost(item);
-		if (isWeapon(item) && item !== self[EQ]) {
-			cost += 1;
-			push(ret, delay(setWeapon)(item));
-			removeElement(self[UNEQ], item);
-			push(self[UNEQ], self[EQ]);
-			self[EQ] = item;
-		}
-		updateState(self[TP])(subTo(cost));
-		//opsin();
-		aIter(ITEMS_EFFECT[item](gameState, self, target))(gameState[S_ALL]);
-		//opsout('aIter(ITEMS_EFFECT[item](gameState, getSelf(gameState), target))(gameState[S_ALL]);', 0);
-		if (isChip(item)) {
-			self[CHIPS][item] = getChipCooldown(item);
-		}
-		if (cBulbes[item]) {
-			push(ret, function() {
-					summon(item, target, function() {
-							aIter(yield)(shift(ACTIONS_QUEUE));
+		return daMap(function(target) {
+			return function() {
+				var ret = [];
+				var cost = getItemCost(item);
+				if (isWeapon(item) && item !== self[EQ]) {
+					cost += 1;
+					push(ret, delay(setWeapon)(item));
+					removeElement(self[UNEQ], item);
+					push(self[UNEQ], self[EQ]);
+					self[EQ] = item;
+				}
+				updateState(self[TP])(subTo(cost));
+				//opsin();
+				aIter(ITEMS_EFFECT[item](gameState, self, target))(gameState[S_ALL]);
+				//opsout('aIter(ITEMS_EFFECT[item](gameState, getSelf(gameState), target))(gameState[S_ALL]);', 0);
+				if (isChip(item)) {
+					self[CHIPS][item] = getChipCooldown(item);
+				}
+				if (cBulbes[item]) {
+					push(ret, function() {
+							summon(item, target, function() {
+									aIter(yield)(shift(ACTIONS_QUEUE));
+								});
 						});
-				});
-		}
-		else {
-			push(ret, delay(compose(useItemOnCell(item))(function(x){
-					mark(x, BEST_COLOR);
-					//debug(getItemName(item) + " -> " + target);
-					return x;
-				}))(target));
-		}
-		return ret;
-	}))(itemList);
+				}
+				else {
+					push(ret, delay(compose(useItemOnCell(item))(function(x){
+							mark(x, BEST_COLOR);
+							debug(getItemName(item) + " -> " + target);
+							return x;
+						}))(target));
+				}
+				return ret;
+			};
+		})(targets);
+	})(itemList);
 }
 
 function getActions(@gameState) {
@@ -111,12 +130,14 @@ function getActions(@gameState) {
 		var actions =@ (actions_queue[count(actions_queue)] = []);
 		for(var i = 0; i < 15; i++) {
 			var list =@ getMove(clonedState);
+			list += list; // I want more chance to move.
 			list += getAction(clonedState);
 			if (list === []) { break; }
-			var actionGenerator =@ list[randInt(0, count(list) + 1)];
-			if (actionGenerator === null) { break; }
+			var curratedList =@ aFilter(notEqual([]))(list);
+			var actionGenerators =@ curratedList[randInt(0, count(curratedList) + 1)];
+			if (actionGenerators === null) { break; }
 			//opsin();
-			actions += actionGenerator();
+			actions += actionGenerators[randInt(0, count(actionGenerators))]();
 			//opsout('actions += list[randInt(0, count(list))]();', COLOR_RED);
 		}
 		clonedState[S_SELF] = clonedState[S_ORDER][getSelf(clonedState)[ORDER]];
@@ -228,7 +249,7 @@ function evaluateState(o) {
 		xaminHPR = 1 - xaminHPR;
 		xaminHPR /= 13;
 		xaminHPR += 12 / 13;
-		var xSelfHPR = xs[oID] === null ? -log(0) : infDiv(1)(xs[oID][HP] / xs[oID][THP]);
+		var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 1 * xs[oID][HP]);
 
 		var xeDist = 1;
 		var xaDist = 1;
@@ -238,30 +259,30 @@ function evaluateState(o) {
 				return getPathLength(spos, xs[e][POS]);
 				};
 			xeDist =@ arrayMin(aMap(getDist)(enemies));
-			xeDist =@ max(1, (1000 + max(0, xeDist - 7 - getSelf(state)[TMP])) / 1000);
+			xeDist =@ max(1, (100 + max(0, xeDist - 7 - getSelf(state)[TMP])) / 100);
 			if (xaAlives > 1) {
 				xaDist =@ sum(aMap(getDist)(allies)) / xaAlives;
 				xaDist =@ max(1, (100 + max(0, xaDist - getSelf(state)[TMP])) / 100);
 			}
 		}
 
-		return xeDist
-			 * xaDist
-			 * ninfDiv(xeLifes)(oeLifes)
-			 * ninfDiv(xeAlives)(oeAlives)
-			 * xeminHPR
-			 * infDiv(oaLifes)(xaLifes)
-			 * infDiv(oaAlives)(xaAlives)
-			 * xaminHPR
-			 * xSelfHPR
-			 * oneOr(oaASH)(xaASH)
-			 * oneOr(oaRSH)(xaRSH)
-			 * oneOr(oaSTR)(xaSTR)
-			 * oneOr(oaAGI)(xaAGI)
-			 * oneOr(xeTTP)(oeTTP)
-			 * oneOr(xeTMP)(oeTMP)
-			 * infDiv(oaTTP)(xaTTP)
-			 * infDiv(oaTMP)(xaTMP);
+		return (1 + xeDist)
+			 * (1 + xaDist)
+			 * (1 + ninfDiv(xeLifes)(oeLifes))
+			 * (1 + ninfDiv(xeAlives)(oeAlives))
+			 * (1 + xeminHPR)
+			 * (1 + infDiv(oaLifes)(xaLifes))
+			 * (1 + infDiv(oaAlives)(xaAlives))
+			 * (1 + xaminHPR)
+			 * (1 + xSelfHPR)
+			 * (1 + oneOr(oaASH)(xaASH))
+			 * (1 + oneOr(oaRSH)(xaRSH))
+			 * (1 + oneOr(oaSTR)(xaSTR))
+			 * (1 + oneOr(oaAGI)(xaAGI))
+			 * (1 + oneOr(xeTTP)(oeTTP))
+			 * (1 + oneOr(xeTMP)(oeTMP))
+			 * (1 + infDiv(oaTTP)(xaTTP))
+			 * (1 + infDiv(oaTMP)(xaTMP));
 	});
 }
 
@@ -279,6 +300,8 @@ function main() {
 	//opsin();
 	var gameState = getGameState();
 	//opsout('var gameState = getGameState();', BEST_COLOR);
+	//aIter(compose(mark)(access(AREA_CIRCLE_2)))(gameState[S_ALL]);
+	//arrayIter(gameState, function(@k, @v) { debug(k + " : " + v); });
 
 	/*var enemies = aFilter(negate(isSummon))(getAliveEnemies());
 	var moves = getlAccessibleCells(getMP())(getCell());
@@ -297,8 +320,8 @@ function main() {
 	var existing = [];
 
 	var safeMod = 1 - 0.25 * (32 - getTurn()) / 64;
-
-	while (getOperations() < 19500000) {
+	var maxOp = getOperations() > 10000000 ? 19000000 : 10000000;
+	while (getOperations() < maxOp) {
 		//opsin();
 		var actions =@ getActions(gameState);
 		//opsout('var actions =@ getActions(gameState);', COLOR_BLUE);
@@ -325,5 +348,6 @@ function main() {
 	aIter(yield)(shift(ACTIONS_QUEUE));
 	sayShit();
 }
+
 debug(getOperations() + 'op');
 debug("totalPop: " + totalPop);

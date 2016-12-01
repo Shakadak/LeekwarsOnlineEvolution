@@ -5,49 +5,49 @@ include('math.js');
 include("map");
 include("item");
 
-global S_SELF = "self";
-global S_ALLIES = "allies";
-global S_ENEMIES = "enemies";
-global S_ALL = "all";
-global S_ORDER = 'order';
-global S_MAX_ID = 'max_id';
+global S_SELF = 100;
+global S_ALLIES = 101;
+global S_ENEMIES = 102;
+global S_ALL = 103;
+global S_ORDER = 104;
+global S_MAX_ID = 105;
 
-global THP = "THP";
-global HP = "HP";
-global TMP = "TMP";
-global MP = "MP";
-global TTP = "TTP";
-global TP = "TP";
-global SCI = "SCI";
-global STR = "STR";
-global MAG = "MAG";
-global WIS = "WIS";
-global AGI = "AGI";
-global RES = "RES";
-global ASH = "ASH";
-global RSH = "RSH";
-global RET = "RET";
-global POS = "POS";
-global TYPE = "TYPE";
-global EFFS = "EFFS";
-global CHIPS = "CHIPS";
-global EQ = "EQ";
-global UNEQ = 'UNEQ';
-global ID = "ID";
-global ORDER = "ORDER";
-global ALLY = "ALLY";
-global ENEMY = "ENEMY";
-global SUMMON = "SUMMON";
-global SUMMONER = "SUMMONER";
-global NAME = "NAME";
-global LEVEL = "LEVEL";
+global THP = 1000;
+global HP = 1001;
+global TMP = 1002;
+global MP = 1003;
+global TTP = 1004;
+global TP = 1005;
+global SCI = 1006;
+global STR = 1007;
+global MAG = 1008;
+global WIS = 1009;
+global AGI = 1010;
+global RES = 1011;
+global ASH = 1012;
+global RSH = 1013;
+global RET = 1014;
+global POS = 1015;
+global TYPE = 1016;
+global EFFS = 1017;
+global CHIPS = 1018;
+global EQ = 1019;
+global UNEQ = 1020;
+global ID = 1021;
+global ORDER = 1022;
+global ALLY = 1023;
+global ENEMY = 1024;
+global SUMMON = 1025;
+global SUMMONER = 1026;
+global NAME = 1027;
+global LEVEL = 1028;
 
 function getGameState() {
 	var ret = [];
-	var allies =@ getAliveAllies();
-	var enemies =@ getAliveEnemies();
+	var allies = getAliveAllies();
+	var enemies = getAliveEnemies();
 	var all =@( allies + enemies );
-	var os =@ kvsFromMap(compose(subTo(1))(getEntityTurnOrder))(getAliveAllies() + getAliveEnemies());
+	var os =@ kvsFromMap(compose(subTo(1))(getEntityTurnOrder))(all);
 keySort(os);
 	var max_id = getAlliesCount() + getEnemiesCount();
 	return 	[ S_SELF	: getLeek()
@@ -77,29 +77,29 @@ function getEntityState(e) {
 			, RES	: getResistance(e)
 			, ASH	: getAbsoluteShield(e)
 			, RSH	: getRelativeShield(e)
-			, RET : getDamageReturn(e)
+			, RET 	: getDamageReturn(e)
 			, POS	: getCell(e)
-			, TYPE: getType(e)
-			, EFFS: getEffects(e)
-			, CHIPS: keysMap(getCooldown)(getChips(e))
+			, TYPE	: getType(e)
+			, EFFS	: getEffects(e)
+			, CHIPS	: keysMap(getCooldown)(getChips(e))
 			, EQ	: equipped
-			, UNEQ: unequipped
+			, UNEQ	: unequipped
 			, ID	: e
 			, ORDER	: getEntityTurnOrder(e)
-			, AREA_POINT		: getApplicableArea(AREA_POINT)(getCell(e))
+			, AREA_POINT	: getApplicableArea(AREA_POINT)(getCell(e))
 			, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(getCell(e))
 			, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(getCell(e))
 			, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(getCell(e))
 			, ALLY	: isAlly(e)
 			, ENEMY	: isEnemy(e)
 			, SUMMON	: isSummon(e)
-			, SUMMONER: getSummoner(e)
+			, SUMMONER	: getSummoner(e)
 			, NAME	: getName(e)
 			, LEVEL	: getLevel(e)
 			];
 }
 
-function getSelf(@state) { return state["all"][state["self"]]; }
+function getSelf(@state) { return state[S_ALL][state[S_SELF]]; }
 
 function getActionListFromState(@s) {
 	var self =@ getSelf(s);
@@ -129,14 +129,6 @@ function getMovementListFromState(@s) {
 function updateState(@s) { return function(@f) { s =@ f(s); };}
 
 function getRandomChip(@s) {
-}
-
-function getItemTargetsFromState(@state, @item, @cell) {
-	var cells = getApplicableArea(getItemArea(item))(cell);
-	return arrayFoldLeft(state[S_ALL], function(@acc, @x) {
-		if (inArray(cells, x[POS])) { push(acc, x[ID]);}
-		return acc;
-	}, []);
 }
 
 global positiveEffects = [
@@ -280,7 +272,7 @@ WEAPON_AXE : function(@state, @caster, @center) {
 			addEffect(false)(target)([EFFECT_SHACKLE_MP, debuff, caster[ID], 1, false, WEAPON_AXE, target[ID]]);
 			removeDead(state)(target);
 		}
-	};}
+	};},
 WEAPON_B_LASER : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
 	var dmg = rawEff(55, caster[STR]) * crit;
@@ -324,7 +316,9 @@ WEAPON_DESTROYER : function(@state, @caster, @center) {
 	return function(@target) {
 		if (center == target[POS]) {
 			atk(dmg, ls, target, caster);
-			target[STR] -= shack(target);
+			var debuff = shack(target);
+			target[STR] -= debuff;
+			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, debuff, caster[ID], 1, false, WEAPON_DESTROYER, target[ID]]);
 			removeDead(state)(target);
 		}
 	};},
@@ -345,8 +339,13 @@ WEAPON_ELECTRISOR : function(@state, @caster, @center) {
 	var dmg = rawEff(75, caster[STR]) * crit;
 	var ls = caster[WIS] / 1000;
 	return function(@target) {
-		if (center == target[POS]) {
+		var tgt =@ target[POS];
+		if (center === tgt) {
 			atk(dmg, ls, target, caster);
+			removeDead(state)(target);
+		}
+		else if (getCellDistance(center, tgt) === 1) {
+			atk(dmg * 0.5, ls, target, caster);
 			removeDead(state)(target);
 		}
 	};},
@@ -393,8 +392,26 @@ WEAPON_GRENADE_LAUNCHER : function(@state, @caster, @center) {
 		}
 	};},
 WEAPON_KATANA : function(@state, @caster, @center) {
+	var crit = 1 + 0.4 * caster[AGI] / 1000;
+	var dmg = rawEff(77, caster[STR]) * crit;
+	var shack = shackle(0.25 * crit, caster);
+	var shackSTR = shackle(20 * crit, caster);
+	var ls = caster[WIS] / 1000;
 	return function(@target) {
-		debugE("Item " + getItemName(WEAPON_KATANA) + " not implemented.");
+		if (center == target[POS]) {
+			atk(dmg, ls, target, caster);
+			var debuff = shack(target);
+			target[MP] -= debuff;
+			target[TMP] -= debuff;
+			addEffect(false)(target)([EFFECT_SHACKLE_MP, debuff, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
+			target[TP] -= debuff;
+			target[TTP] -= debuff;
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
+			var debuffSTR = shackSTR(target);
+			target[STR] -= debuffSTR;
+			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, debuffSTR, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
+			removeDead(state)(target);
+		}
 	};},
 WEAPON_LASER : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
