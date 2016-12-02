@@ -22,6 +22,9 @@ function averageDmgFromLeekOnCell(@cell) { return function(@leek) {
 	return dmgAvg * critMultiplier * leek[TP];
 };}
 
+/**
+* averageDmgFromLeeksOnCell : (LeekState -> Bool) -> Cell -> Array LeekState -> Int
+*/
 function averageDmgFromLeeksOnCell(@p) { return function(@cell) { return function(@leeks) {
 	return arrayFoldLeft(leeks, function(@acc, @l) {
 		return acc + (p(l) ? averageDmgFromLeekOnCell(cell)(l) : 0);
