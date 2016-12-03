@@ -33,33 +33,10 @@ function getTargets(@state, @item) {
 	return validCells;
 }
 
-/*
-function getRandomTarget(@state, @item) {
-	var area = getItemArea(item);
-	var validCells = [];
-	var getTargets =@ ITEMS_TARGETS[item];
-	if (typeOf(getTargets) === TYPE_FUNCTION) {
-		validCells =@ getTargets(state);
-	}
-	else {
-		var states =@ state[S_ALL];
-		var validTargets =@ (isWeapon(item) || cAttaques[item] || cDebuffs[item] || cPoisons[item]	? state[S_ENEMIES] : state[S_ALLIES]);
-		validCells =@ aConcatMap(function(@x){return (states[x][SUMMON] && states[x][NAME] == 'puny_bulb') ? [] : states[x][area];})(validTargets);
-	}
-	shuffle(validCells);
-	var target;
-	do {
-		target = shift(validCells);
-	} while (  target !== null
-				&& !canTargetCell(item)(getSelf(state)[POS])(target));
-	return target;
-}
-*/
-
 function getMove(@gameState) {
 	if (getSelf(gameState)[MP] === 0) { return []; }
 	var moveList =@ getMovementListFromState(gameState);
-	return [aMap(delay(function(@cell) {
+	return delay(aMap(delay(function(@cell) {
 		var moved = moveList["mcosts"][cell];
 		getSelf(gameState)[MP] -= moved;
 		getSelf(gameState)[POS] = cell;
@@ -67,19 +44,19 @@ function getMove(@gameState) {
 		getSelf(gameState)[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(cell);
 		getSelf(gameState)[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(cell);
 		getSelf(gameState)[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
-		return [delay(compose(moveTowardCell)(function(x){
+		return [delay(compose(moveTowardCell)(function(x) {
 			mark(x, COLOR_YELLOW);
 			debug("M -> " + x);
 			return x;
 		}))(cell)];
-	}))(moveList["moves"])];
+	})))(moveList["moves"]);
 }
 
 function getAction(@gameState) {
 	var itemList =@ getActionListFromState(gameState);
 	var self =@ getSelf(gameState);
 	var pos = self[POS];
-	return aMap(function(@item) {
+	return aMap(delay(function(@item) {
 		//opsin();
 		var targets =@ getTargets(gameState, item);
 		//opsout('var target = getRandomTarget(gameState, item);', 0);
@@ -118,31 +95,45 @@ function getAction(@gameState) {
 				return ret;
 			};
 		})(targets);
-	})(itemList);
+	}))(itemList);
 }
 
 function getActions(@gameState) {
 	//opsin();
-	var clonedState = gameState;
 	//opsout('var clonedState = gameState;', BEST_COLOR);
-	var actions_queue = [];
+	//var opin0 = getOperations();
+	var ret = ["actions": [], "state": gameState];
+	var clonedState =@ ret["state"];
+	var actions_queue =@ ret["actions"];
+	//var opout0 = getOperations();
+	//debugC((opout0 - opin0) * 100 / OPERATIONS_LIMIT, COLOR_GREEN);
+	//var opin1 = getOperations();
 	do {
 		var actions =@ (actions_queue[count(actions_queue)] = []);
-		for(var i = 0; i < 15; i++) {
-			var list =@ getMove(clonedState);
+		//for(var i = 0; i < 15; i++) {
+		while (true) {
+			var breakout = false;
+			var list =@ [getMove(clonedState)];
 			list += list; // I want more chance to move.
 			list += getAction(clonedState);
 			if (list === []) { break; }
 			var curratedList =@ aFilter(notEqual([]))(list);
-			var actionGenerators =@ curratedList[randInt(0, count(curratedList) + 1)];
-			if (actionGenerators === null) { break; }
-			//opsin();
-			actions += actionGenerators[randInt(0, count(actionGenerators))]();
-			//opsout('actions += list[randInt(0, count(list))]();', COLOR_RED);
+			do {
+				var actionGenerator =@ curratedList[randInt(0, count(curratedList) + 1)];
+				if (actionGenerator === null) { breakout =@ true; break; }
+				var actionsGenerated =@ actionGenerator();
+				if (actionsGenerated !== []) {
+					actions += actionsGenerated[randInt(0, count(actionsGenerated))]();
+					break ;
+				}
+			} while (true);
+			if (breakout) { break ; }
 		}
 		clonedState[S_SELF] = clonedState[S_ORDER][getSelf(clonedState)[ORDER]];
 	} while (getSelf(clonedState)[SUMMON]);
-	return ["actions": actions_queue, "state": clonedState];
+	//var opout1 = getOperations();
+	//debugC((opout1 - opin1) * 100 / OPERATIONS_LIMIT, COLOR_BLUE);
+	return ret;
 }
 
 function sumState(@all, @ls, @stat) {
@@ -319,8 +310,8 @@ function main() {
 	var popSelect = pqPop(population);
 	var existing = [];
 
-	var safeMod = 1 - 0.25 * (32 - getTurn()) / 64;
-	var maxOp = getOperations() > 10000000 ? 19000000 : 10000000;
+	//var safeMod = 1 - 0.25 * (32 - getTurn()) / 64;
+	var maxOp = 18500000;
 	while (getOperations() < maxOp) {
 		//opsin();
 		var actions =@ getActions(gameState);
