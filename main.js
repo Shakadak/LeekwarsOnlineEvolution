@@ -26,9 +26,7 @@ function getTargets(@state, @item) {
 		validCells =@ _getTargets(state);
 	}
 	else {
-		var states =@ state[S_ALL];
-		var validTargets =@ (isWeapon(item) || cAttaques[item] || cDebuffs[item] || cPoisons[item]	? state[S_ENEMIES] : state[S_ALLIES]);
-		validCells =@ aConcatMap(function(@x){return (states[x][SUMMON] && states[x][NAME] == 'puny_bulb') ? [] : states[x][area];})(validTargets);
+		debugE("getTargets not implemented for " + getItemName(item));
 	}
 	return validCells;
 }
@@ -57,9 +55,7 @@ function getAction(@gameState) {
 	var self =@ getSelf(gameState);
 	var pos = self[POS];
 	return aMap(delay(function(@item) {
-		//opsin();
 		var targets =@ getTargets(gameState, item);
-		//opsout('var target = getRandomTarget(gameState, item);', 0);
 		return daMap(function(target) {
 			return function() {
 				var ret = [];
@@ -72,9 +68,7 @@ function getAction(@gameState) {
 					self[EQ] = item;
 				}
 				updateState(self[TP])(subTo(cost));
-				//opsin();
 				aIter(ITEMS_EFFECT[item](gameState, self, target))(gameState[S_ALL]);
-				//opsout('aIter(ITEMS_EFFECT[item](gameState, getSelf(gameState), target))(gameState[S_ALL]);', 0);
 				if (isChip(item)) {
 					self[CHIPS][item] = getChipCooldown(item);
 				}
@@ -99,15 +93,9 @@ function getAction(@gameState) {
 }
 
 function getActions(@gameState) {
-	//opsin();
-	//opsout('var clonedState = gameState;', BEST_COLOR);
-	//var opin0 = getOperations();
 	var ret = ["actions": [], "state": gameState];
 	var clonedState =@ ret["state"];
 	var actions_queue =@ ret["actions"];
-	//var opout0 = getOperations();
-	//debugC((opout0 - opin0) * 100 / OPERATIONS_LIMIT, COLOR_GREEN);
-	//var opin1 = getOperations();
 	do {
 		var actions =@ (actions_queue[count(actions_queue)] = []);
 		//for(var i = 0; i < 15; i++) {
@@ -131,8 +119,6 @@ function getActions(@gameState) {
 		}
 		clonedState[S_SELF] = clonedState[S_ORDER][getSelf(clonedState)[ORDER]];
 	} while (getSelf(clonedState)[SUMMON]);
-	//var opout1 = getOperations();
-	//debugC((opout1 - opin1) * 100 / OPERATIONS_LIMIT, COLOR_BLUE);
 	return ret;
 }
 

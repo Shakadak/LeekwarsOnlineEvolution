@@ -251,6 +251,7 @@ WEAPON_SHOTGUN : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_ACCELERATION : function(@state) {
+	var canDo =@ canTargetCell(CHIP_ACCELERATION)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
@@ -279,13 +280,21 @@ CHIP_ARMORING : function(@state) {
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
-CHIP_BALL_AND_CHAIN : CHIP_BALL_AND_CHAIN,
+CHIP_BALL_AND_CHAIN : function(@state) {
+	return aConcatFilterMap(function(@x){
+		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
+		return x[AREA_CIRCLE_2]; })
+		(canTargetCell(CHIP_BALL_AND_CHAIN)(getSelf(state)[POS]))
+		(state[S_ALL]);
+},
 CHIP_BANDAGE : function(@state) {
+	var canDo =@ canTargetCell(CHIP_BANDAGE)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[HP] != x[THP]; })
 		  (state[S_ALL]));
 },
 CHIP_BARK : function(@state) {
+	var canDo =@ canTargetCell(CHIP_BARK)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
@@ -297,6 +306,7 @@ CHIP_CARAPACE : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_COLLAR : function(@state) {
+	var canDo =@ canTargetCell(CHIP_COLLAR)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
@@ -307,21 +317,37 @@ CHIP_CURE : function(@state) {
 		  (aFilter(function(@x){ return x[ALLY] && x[HP] != x[THP] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
-CHIP_DEVIL_STRIKE : CHIP_DEVIL_STRIKE,
+CHIP_DEVIL_STRIKE : function(@state) {
+	return [getSelf(state)[POS]];
+},
 CHIP_DOPING : function(@state) {
 	var canDo =@ canTargetCell(CHIP_DOPING)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
-CHIP_DRIP : CHIP_DRIP,
-CHIP_FEROCITY : CHIP_FEROCITY,
-CHIP_FERTILIZER : function(@state) {
+CHIP_DRIP : function(@state) {
+	return aConcatFilterMap(function(@x){
+		if (x[ENEMY] || x[NAME] === 'puny_bulb' || x[HP] == x[THP]) { return []; }
+		return x[AREA_CIRCLE_2]; })
+		(canTargetCell(CHIP_DRIP)(getSelf(state)[POS]))
+		(state[S_ALL]);
+},
+CHIP_FEROCITY : function(@state) {
+	var canDo =@ canTargetCell(CHIP_FEROCITY)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
 },
-CHIP_FIRE_BULB : CHIP_FIRE_BULB,
+CHIP_FERTILIZER : function(@state) {
+	var canDo =@ canTargetCell(CHIP_FERTILIZER)(getSelf(state)[POS]);
+	return daMap(function(@x){ return x[POS]; })
+		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
+		  (state[S_ALL]));
+},
+CHIP_FIRE_BULB : function(@state) {
+	return getCellsToUseChipOnCell(CHIP_FIRE_BULB, getSelf(state)[POS]);
+},
 CHIP_FLAME : function(@state) {
 	var canDo =@ canTargetCell(CHIP_FLAME)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
@@ -369,7 +395,9 @@ CHIP_ICEBERG : function(@state) {
 		(canTargetCell(CHIP_ICEBERG)(getSelf(state)[POS]))
 		(state[S_ALL]);
 },
-CHIP_ICED_BULB : CHIP_ICED_BULB,
+CHIP_ICED_BULB : function(@state) {
+	return getCellsToUseChipOnCell(CHIP_ICED_BULB, getSelf(state)[POS]);
+},
 CHIP_INVERSION : function(@state) {
 	var canDo =@ canTargetCell(CHIP_INVERSION)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
@@ -399,13 +427,18 @@ CHIP_LIGHTNING : function(@state) {
 		(canTargetCell(CHIP_LIGHTNING)(getSelf(state)[POS]))
 		(state[S_ALL]);
 },
-CHIP_LIGHTNING_BULB : CHIP_LIGHTNING_BULB,
+CHIP_LIGHTNING_BULB : function(@state) {
+	return getCellsToUseChipOnCell(CHIP_LIGHTNING_BULB, getSelf(state)[POS]);
+},
 CHIP_LOAM : function(@state) {
+	var canDo =@ canTargetCell(CHIP_LOAM)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
 },
-CHIP_METALLIC_BULB : CHIP_METALLIC_BULB,
+CHIP_METALLIC_BULB : function(@state) {
+	return getCellsToUseChipOnCell(CHIP_METALLIC_BULB, getSelf(state)[POS]);
+},
 CHIP_METEORITE : function(@state) {
 	return aConcatFilterMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
@@ -472,6 +505,7 @@ CHIP_REGENERATION : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_REMISSION : function(@state) {
+	var canDo =@ canTargetCell(CHIP_REMISSION)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
@@ -490,7 +524,9 @@ CHIP_ROCKFALL : function(@state) {
 		(canTargetCell(CHIP_ROCKFALL)(getSelf(state)[POS]))
 		(state[S_ALL]);
 },
-CHIP_ROCKY_BULB : CHIP_ROCKY_BULB,
+CHIP_ROCKY_BULB : function(@state) {
+	return getCellsToUseChipOnCell(CHIP_ROCKY_BULB, getSelf(state)[POS]);
+},
 CHIP_SEVEN_LEAGUE_BOOTS : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SEVEN_LEAGUE_BOOTS)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
@@ -521,7 +557,13 @@ CHIP_SOLIDIFICATION : function(@state) {
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
-CHIP_SOPORIFIC : CHIP_SOPORIFIC,
+CHIP_SOPORIFIC : function(@state) {
+	return aConcatFilterMap(function(@x){
+		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
+		return x[AREA_CIRCLE_2]; })
+		(canTargetCell(CHIP_SOPORIFIC)(getSelf(state)[POS]))
+		(state[S_ALL]);
+},
 CHIP_SPARK : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SPARK)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
@@ -588,6 +630,7 @@ CHIP_WARM_UP : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_WHIP : function(@state) {
+	var canDo =@ canTargetCell(CHIP_WHIP)(getSelf(state)[POS]);
 	return daMap(function(@x){ return x[POS]; })
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
