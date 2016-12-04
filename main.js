@@ -178,7 +178,6 @@ function evaluateState(o) {
 		var xs =@ state[S_ALL];
 		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[oID][POS])(xs);
 		xs[oID][HP] -= dmgOnSelf;
-		//debugC(dmgOnSelf, COLOR_RED);
 
 		aIter(compose(removeDead(state))(applyEffects))(xs);
 
@@ -186,12 +185,6 @@ function evaluateState(o) {
 		var allies =@ state[S_ALLIES];
 		var xeAlives = count(enemies);
 		var xaAlives = count(allies);
-		/*
-		var xeLifes = sumState(xs, x[S_ENEMIES], HP);
-		var xeTTP = sumState(xs, x[S_ENEMIES], TTP);
-		var xeTMP = sumState(xs, x[S_ENEMIES], TMP);
-		*/
-
 
 		var xeLifes = 0;
 		var xeTTP = 0;
@@ -200,18 +193,6 @@ function evaluateState(o) {
 		getStats(xs, enemies)(xeLifes, xeTTP, xeTMP, 0, 0, 0, 0, xeminHPR);
 		xeminHPR /= 13;
 		xeminHPR += 12 / 13;
-		//debug('getStats + xeminHPR');
-
-		/*
-		var xaLifes = sumState(xs, x[S_ALLIES], HP);
-		var xaTTP = sumState(xs, x[S_ALLIES], TTP);
-		var xaTMP = sumState(xs, x[S_ALLIES], TMP);
-		var xaASH = sumState(xs, x[S_ALLIES], ASH);
-		var xaRSH = sumState(xs, x[S_ALLIES], RSH);
-		var xaSTR = sumState(xs, x[S_ALLIES], STR);
-		var xaAGI = sumState(xs, x[S_ALLIES], AGI);
-		*/
-
 
 		var xaLifes = 0;
 		var xaTTP = 0;
@@ -274,19 +255,7 @@ function main() {
 	}
 
 	initObstacles(aMap(getCell)(getAliveAllies() + getAliveEnemies()));
-	//opsin();
 	var gameState = getGameState();
-	//opsout('var gameState = getGameState();', BEST_COLOR);
-	//aIter(compose(mark)(access(AREA_CIRCLE_2)))(gameState[S_ALL]);
-	//arrayIter(gameState, function(@k, @v) { debug(k + " : " + v); });
-
-	/*var enemies = aFilter(negate(isSummon))(getAliveEnemies());
-	var moves = getlAccessibleCells(getMP())(getCell());
-	var simpleMoves = getKeys(moves);
-	mark(simpleMoves, COLOR_RED);
-	var safeAccessibleCells =@ getSomewhatSafeCells(getDangerousItems)(simpleMoves)(enemies);
-	var checkSafeCell = bmemo(curry2(inArray)(safeAccessibleCells));
-	mark(safeAccessibleCells, COLOR_GREEN);*/
 
 	debug(getOperations() + 'op');
 
@@ -296,19 +265,10 @@ function main() {
 	var popSelect = pqPop(population);
 	var existing = [];
 
-	//var safeMod = 1 - 0.25 * (32 - getTurn()) / 64;
 	var maxOp = 18500000;
 	while (getOperations() < maxOp) {
-		//opsin();
 		var actions =@ getActions(gameState);
-		//opsout('var actions =@ getActions(gameState);', COLOR_BLUE);
-		//debug('');
 		var value = evaluate(actions["state"]);
-		/*if (checkSafeCell(getSelf(actions['state'])[POS])) {
-			value *= safeMod;
-		}*/
-	//	if (existing["" + actions["state"]])	{ continue; }
-	//	else						{ existing["" + actions["state"]] = true; }
 		totalPop++;
 		popInsert(value, actions);
 	}
@@ -316,12 +276,9 @@ function main() {
 	var value;
 	var elected = population[0](value);
 	debug('value = ' + value);
-	//aIter(function(@x) { debugC(x[EFFS], COLOR_BLUE); })(gameState[S_ALL]);
-	//debug('');
-	//aIter(function(@x) { debugC(x[EFFS], COLOR_BLUE); })(elected["state"][S_ALL]);
 	debugC('action count: ' + count(elected['actions'][0]), BEST_COLOR);
+
 	ACTIONS_QUEUE =@ elected['actions'];
-	debug(getOperations() + 'op');
 	aIter(yield)(shift(ACTIONS_QUEUE));
 	sayShit();
 }

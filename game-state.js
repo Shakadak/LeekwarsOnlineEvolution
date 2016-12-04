@@ -2,6 +2,7 @@ include("functional.js");
 include("bool.js");
 include("array.js");
 include('math.js');
+include('struct.js');
 include("map");
 include("item");
 
@@ -81,7 +82,7 @@ function getEntityState(e) {
 			, POS	: getCell(e)
 			, TYPE	: getType(e)
 			, EFFS	: getEffects(e)
-			, CHIPS	: keysMap(getCooldown)(getChips(e))
+			, CHIPS	: keysMap(flip(curry2(getCooldown))(e))(getChips(e))
 			, EQ	: equipped
 			, UNEQ	: unequipped
 			, ID	: e
@@ -121,7 +122,8 @@ function getActionListFromState(@s) {
 }
 
 function getMovementListFromState(@s) {
-	var moves =@ getlAccessibleCells(/*min(1, */getSelf(s)[MP]/*)*/)(getSelf(s)[POS]);
+	var moves =@ getlAccessibleCells(getSelf(s)[MP])(getSelf(s)[POS]);
+	removeKey(moves, getSelf(s)[POS]);
 	return	[ "moves"	: getKeys(moves)
 			, "mcosts"	: moves ];
 }
@@ -632,17 +634,17 @@ CHIP_HEALER_BULB : function(@state, @caster, @center) {
 	var clevel = caster[LEVEL] - 1;
 	var corder = caster[ORDER];
 	var new_id = state[S_MAX_ID]++;
-	var entity =@	[ THP	: 400 + round(clevel / 300)
-					, HP	: 400 + round(clevel / 300)
+	var entity =@	[ THP	: 400 + round(100 * clevel / 300)
+					, HP	: 400 + round(100 * clevel / 300)
 					, TMP	: 3 + round(3 * clevel / 300)
-					, TMP	: 3 + round(3 * clevel / 300)
-					, TMP	: 4 + round(4 * clevel / 300)
+					, MP	: 3 + round(3 * clevel / 300)
+					, TTP	: 4 + round(4 * clevel / 300)
 					, TP	: 4 + round(4 * clevel / 300)
 					, SCI	: 0
 					, STR	: 0
 					, MAG	: 0
 					, WIS	: 0 + round(300 * clevel / 300)
-					, AGI	: 0 + round(300 * clevel / 300)
+					, AGI	: 0 + round(100 * clevel / 300)
 					, RES	: 0
 					, ASH	: 0
 					, RSH	: 0
@@ -658,7 +660,7 @@ CHIP_HEALER_BULB : function(@state, @caster, @center) {
 					, UNEQ: []
 					, ID	: new_id
 					, ORDER	: corder + 1
-					, AREA_POINT		: getApplicableArea(AREA_POINT)(center)
+					, AREA_POINT	: getApplicableArea(AREA_POINT)(center)
 					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
 					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
 					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
@@ -720,8 +722,13 @@ CHIP_ICED_BULB : function(@state, @caster, @center) {
 	};},
 CHIP_INVERSION : function(@state, @caster, @center) {
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_INVERSION);
+		if (target[POS] == center) {
+			dswap(caster[POS], target[POS]);
+			dswap(caster[AREA_POINT], target[AREA_POINT]);
+			dswap(caster[AREA_CIRCLE_1], target[AREA_CIRCLE_1]);
+			dswap(caster[AREA_CIRCLE_2], target[AREA_CIRCLE_2]);
+			dswap(caster[AREA_CIRCLE_3], target[AREA_CIRCLE_3]);
+		}
 	};},
 CHIP_LEATHER_BOOTS : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
@@ -773,9 +780,51 @@ CHIP_LOAM : function(@state, @caster, @center) {
 				(getItemName)(CHIP_LOAM);
 	};},
 CHIP_METALLIC_BULB : function(@state, @caster, @center) {
+	var clevel = caster[LEVEL] - 1;
+	var corder = caster[ORDER];
+	var new_id = state[S_MAX_ID]++;
+	var entity =@	[ THP	: 800 + round(700 * clevel / 300)
+					, HP	: 800 + round(700 * clevel / 300)
+					, TMP	: 1 + round(2 * clevel / 300)
+					, MP	: 1 + round(2 * clevel / 300)
+					, TTP	: 5 + round(4 * clevel / 300)
+					, TP	: 5 + round(4 * clevel / 300)
+					, SCI	: 0 + round(200 * clevel / 300)
+					, STR	: 0
+					, MAG	: 0
+					, WIS	: 0
+					, AGI	: 0 + round(100 * clevel / 300)
+					, RES	: 0 + round(300 * clevel / 300)
+					, ASH	: 0
+					, RSH	: 0
+					, RET : 0
+					, POS	: center
+					, TYPE: ENTITY_BULB
+					, EFFS: []
+					, CHIPS:	[ CHIP_SHIELD: 0
+								, CHIP_ARMOR: 0
+								, CHIP_WALL: 0
+								, CHIP_SEVEN_LEAGUE_BOOTS: 0 ]
+					, EQ	: null
+					, UNEQ: []
+					, ID	: new_id
+					, ORDER	: corder + 1
+					, AREA_POINT		: getApplicableArea(AREA_POINT)(center)
+					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
+					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
+					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
+					, ALLY	: true
+					, ENEMY	: false
+					, SUMMON	: true
+					, SUMMONER: caster[ID]
+					, NAME	: 'metallic_bulb'
+					, LEVEL	: clevel
+					];
+	aIter(function(@x) { if (x[ORDER] > corder) { x[ORDER]++; }})(state[S_ALL]);
+	push(state[S_ALLIES], new_id);
+	state[S_ALL][new_id] = entity;
+	insert(state[S_ORDER], new_id, corder);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_METALLIC_BULB);
 	};},
 CHIP_METEORITE : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
@@ -841,9 +890,14 @@ CHIP_PUNY_BULB : function(@state, @caster, @center) {
 				(getItemName)(CHIP_PUNY_BULB);
 	};},
 CHIP_RAGE : function(@state, @caster, @center) {
+	var crit = 1 + 0.4 * caster[AGI] / 1000;
+	var buff = round(rawEff(0.55, caster[SCI]) * crit);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_RAGE);
+		if (center == target[POS]) {
+			target[TTP] += buff;
+			target[TP] += buff;
+			addEffect(true)(target)([EFFECT_BUFF_TP, buff, caster[ID], 2, false, CHIP_MOTIVATION, target[ID]]);
+		}
 	};},
 CHIP_RAMPART : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
