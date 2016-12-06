@@ -36,12 +36,15 @@ function getMove(@gameState) {
 	var moveList =@ getMovementListFromState(gameState);
 	return delay(aMap(delay(function(@cell) {
 		var moved = moveList["mcosts"][cell];
-		getSelf(gameState)[MP] -= moved;
-		getSelf(gameState)[POS] = cell;
-		getSelf(gameState)[AREA_POINT] = getApplicableArea(AREA_POINT)(cell);
-		getSelf(gameState)[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(cell);
-		getSelf(gameState)[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(cell);
-		getSelf(gameState)[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
+		var self =@ getSelf(gameState);
+		__obstacles[self[POS]] = false;
+		__obstacles[cell] = true;
+		self[MP] -= moved;
+		self[POS] = cell;
+		self[AREA_POINT] = getApplicableArea(AREA_POINT)(cell);
+		self[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(cell);
+		self[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(cell);
+		self[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
 		return [delay(compose(moveTowardCell)(function(x) {
 			mark(x, COLOR_YELLOW);
 			debug("M -> " + x);

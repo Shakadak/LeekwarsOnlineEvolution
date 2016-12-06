@@ -631,6 +631,7 @@ CHIP_FRACTURE : function(@state, @caster, @center) {
 				(getItemName)(CHIP_FRACTURE);
 	};},
 CHIP_HEALER_BULB : function(@state, @caster, @center) {
+	__obstacles[center] = true;
 	var clevel = caster[LEVEL] - 1;
 	var corder = caster[ORDER];
 	var new_id = state[S_MAX_ID]++;
@@ -780,6 +781,7 @@ CHIP_LOAM : function(@state, @caster, @center) {
 				(getItemName)(CHIP_LOAM);
 	};},
 CHIP_METALLIC_BULB : function(@state, @caster, @center) {
+	__obstacles[center] = true;
 	var clevel = caster[LEVEL] - 1;
 	var corder = caster[ORDER];
 	var new_id = state[S_MAX_ID]++;
@@ -809,7 +811,7 @@ CHIP_METALLIC_BULB : function(@state, @caster, @center) {
 					, UNEQ: []
 					, ID	: new_id
 					, ORDER	: corder + 1
-					, AREA_POINT		: getApplicableArea(AREA_POINT)(center)
+					, AREA_POINT	: getApplicableArea(AREA_POINT)(center)
 					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
 					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
 					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
@@ -1052,6 +1054,8 @@ CHIP_STRETCHING : function(@state, @caster, @center) {
 		}
 	};},
 CHIP_TELEPORTATION : function(@state, @caster, @center) {
+	__obstacles[caster[POS]] = false;
+	__obstacles[center] = true;
 	caster[POS] = center;
 	caster[AREA_POINT] = [center];
 	caster[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(center);
