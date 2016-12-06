@@ -46,7 +46,7 @@ function getMove(@gameState) {
 		self[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(cell);
 		self[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
 		return [delay(compose(moveTowardCell)(function(x) {
-			mark(x, COLOR_YELLOW);
+			//mark(x, COLOR_YELLOW);
 			debug("M -> " + x);
 			return x;
 		}))(cell)];
@@ -84,7 +84,7 @@ function getAction(@gameState) {
 				}
 				else {
 					push(ret, delay(compose(useItemOnCell(item))(function(x){
-							mark(x, BEST_COLOR);
+							//mark(x, BEST_COLOR);
 							debug(getItemName(item) + " -> " + target);
 							return x;
 						}))(target));
@@ -258,6 +258,7 @@ function main() {
 	}
 
 	initObstacles(aMap(getCell)(getAliveAllies() + getAliveEnemies()));
+	var baseObstacles = __obstacles;
 	var gameState = getGameState();
 
 	debug(getOperations() + 'op');
@@ -270,6 +271,7 @@ function main() {
 
 	var maxOp = 18500000;
 	while (getOperations() < maxOp) {
+		__obstacles = baseObstacles;
 		var actions =@ getActions(gameState);
 		var value = evaluate(actions["state"]);
 		totalPop++;
