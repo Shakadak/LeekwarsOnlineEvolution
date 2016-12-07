@@ -121,11 +121,10 @@ function getActionListFromState(@s) {
 	return	aAppend(weapons)(chips);
 }
 
-function getMovementListFromState(@s) {
-	var moves =@ getlAccessibleCells(getSelf(s)[MP])(getSelf(s)[POS]);
-	removeKey(moves, getSelf(s)[POS]);
-	return	[ "moves"	: getKeys(moves)
-			, "mcosts"	: moves ];
+function getMovementListFromState(@s, @moves, @costs) {
+	costs =@ getlAccessibleCells(getSelf(s)[MP])(getSelf(s)[POS]);
+	removeKey(costs, getSelf(s)[POS]);
+	moves =@ getKeys(costs);
 }
 
 function updateState(@s) { return function(@f) { s =@ f(s); };}
@@ -240,8 +239,8 @@ function shackle(@base, @caster) {
 function atk(@dmg, @ls, @target, @caster) {
 	var effDmg = damage(dmg, target);
 	target[HP] -= effDmg;
-	caster[HP] = heal(ls * effDmg, caster);
 	caster[HP] -= dmg * target[RET] / 100;
+	caster[HP] = heal(ls * effDmg, caster);
 }
 
 function removeDead(@state) {

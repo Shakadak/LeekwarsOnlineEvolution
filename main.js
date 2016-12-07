@@ -11,6 +11,10 @@ include("pq.js");
 include('Funno');
 include('danger');
 
+global opin_move = 0, opout_move = 0;
+global opin_attack = 0, opout_attack = 0;
+global opin_select = 0, opout_select = 0;
+
 global totalPop;
 totalPop =@ 0;
 
@@ -33,24 +37,27 @@ function getTargets(@state, @item) {
 
 function getMove(@gameState) {
 	if (getSelf(gameState)[MP] === 0) { return []; }
-	var moveList =@ getMovementListFromState(gameState);
-	return delay(aMap(delay(function(@cell) {
-		var moved = moveList["mcosts"][cell];
-		var self =@ getSelf(gameState);
-		__obstacles[self[POS]] = false;
-		__obstacles[cell] = true;
-		self[MP] -= moved;
-		self[POS] = cell;
-		self[AREA_POINT] = getApplicableArea(AREA_POINT)(cell);
-		self[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(cell);
-		self[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(cell);
-		self[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
-		return [delay(compose(moveTowardCell)(function(x) {
-			//mark(x, COLOR_YELLOW);
-			debug("M -> " + x);
-			return x;
-		}))(cell)];
-	})))(moveList["moves"]);
+	return [function() {
+		var costs, moves;
+		getMovementListFromState(gameState, moves, costs);
+		return daMap(function(cell) { return function() {
+			var moved = costs[cell];
+			var self =@ getSelf(gameState);
+			__obstacles[self[POS]] = false;
+			__obstacles[cell] = true;
+			self[MP] -= moved;
+			self[POS] = cell;
+			self[AREA_POINT] = getApplicableArea(AREA_POINT)(cell);
+			self[AREA_CIRCLE_1] = getApplicableArea(AREA_CIRCLE_1)(cell);
+			self[AREA_CIRCLE_2] = getApplicableArea(AREA_CIRCLE_2)(cell);
+			self[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
+			return [delay(compose(moveTowardCell)(function(x) {
+				//mark(x, COLOR_YELLOW);
+				debug("M -> " + x);
+				return x;
+			}))(cell)];
+		};})(moves);
+	}];
 }
 
 function getAction(@gameState) {
@@ -104,11 +111,16 @@ function getActions(@gameState) {
 		//for(var i = 0; i < 15; i++) {
 		while (true) {
 			var breakout = false;
-			var list =@ [getMove(clonedState)];
+			opin_move += getOperations();
+			var list =@ getMove(clonedState);
 			list += list; // I want more chance to move.
+			opout_move += getOperations();
+			opin_attack += getOperations();
 			list += getAction(clonedState);
-			if (list === []) { break; }
-			var curratedList =@ aFilter(notEqual([]))(list);
+			opout_attack += getOperations();
+			//if (list === []) { break; }
+			var curratedList =@ list; //aFilter(notEqual([]))(list);
+			opin_select += getOperations();
 			do {
 				var actionGenerator =@ curratedList[randInt(0, count(curratedList) + 1)];
 				if (actionGenerator === null) { breakout =@ true; break; }
@@ -118,6 +130,7 @@ function getActions(@gameState) {
 					break ;
 				}
 			} while (true);
+			opout_select += getOperations();
 			if (breakout) { break ; }
 		}
 		clonedState[S_SELF] = clonedState[S_ORDER][getSelf(clonedState)[ORDER]];
@@ -269,14 +282,35 @@ function main() {
 	var popSelect = pqPop(population);
 	var existing = [];
 
+	opin_move = 0;
+	opout_move = 0;
+	opin_attack = 0;
+	opout_attack = 0;
+	opin_select = 0;
+	opout_select = 0;
+	var opin_evaluate = 0, opout_evaluate = 0;
+	var opin_prio = 0, opout_prio = 0;
+
 	var maxOp = 18500000;
 	while (getOperations() < maxOp) {
 		__obstacles = baseObstacles;
 		var actions =@ getActions(gameState);
+		opin_evaluate += getOperations();
 		var value = evaluate(actions["state"]);
+		opout_evaluate += getOperations();
 		totalPop++;
+		opin_prio += getOperations();
 		popInsert(value, actions);
+		opout_prio += getOperations();
 	}
+		debugC((opout_move - opin_move) * 100 / OPERATIONS_LIMIT, COLOR_GREEN);
+		debugC((opout_attack - opin_attack) * 100 / OPERATIONS_LIMIT, COLOR_RED);
+		debugC((opout_select - opin_select) * 100 / OPERATIONS_LIMIT, COLOR_BLUE);
+		debugC((opout_select - opin_move) * 100 / OPERATIONS_LIMIT, 0);
+		debugC((opout_evaluate - opin_evaluate) * 100 / OPERATIONS_LIMIT, BEST_COLOR);
+		debugC((opout_prio - opin_prio) * 100 / OPERATIONS_LIMIT, 0);
+		debug("totalPop: " + totalPop);
+		debug('');
 
 	var value;
 	var elected = population[0](value);
@@ -289,4 +323,3 @@ function main() {
 }
 
 debug(getOperations() + 'op');
-debug("totalPop: " + totalPop);
