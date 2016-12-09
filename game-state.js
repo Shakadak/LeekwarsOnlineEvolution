@@ -246,6 +246,7 @@ function atk(@dmg, @ls, @target, @caster) {
 function removeDead(@state) {
 	return function(@target) {
 		if (target[HP] <= 0) {
+			__obstacles[target[POS]] = false;
 			var ident = target[ID];
 			removeElement(state[S_ALLIES], ident);
 			removeElement(state[S_ENEMIES], ident);
