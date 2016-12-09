@@ -19,7 +19,7 @@ function averageDmgFromLeekOnCell(@cell) { return function(@leek) {
 	if (eq !== null) { push(dangerousItems, eq); }
 	dangerousItems =@ aFilter(compose(inferior(dist))(lookup(ITEM_MAX_RANGE)))(dangerousItems);
 	var dmgAvg = defaultDiv(0)(sum(daMap(lookup(ITEM_DMG_TP))(dangerousItems)))(count(dangerousItems));
-	return dmgAvg * critMultiplier * leek[TP];
+	return dmgAvg * dmgMultiplier * critMultiplier * leek[TP];
 };}
 
 /**

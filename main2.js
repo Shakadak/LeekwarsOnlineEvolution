@@ -315,7 +315,7 @@ function evaluateState(o) {
 		xaminHPR = 1 - xaminHPR;
 		xaminHPR /= 13;
 		xaminHPR += 12 / 13;
-		var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 0.90 * xs[oID][HP] + (-00));
+		var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 1 * xs[oID][HP] + (-00));
 
 		var xeDist = 1;
 		var xaDist = 1;
@@ -382,7 +382,7 @@ function main() {
 	var opin_evaluate = 0, opout_evaluate = 0;
 	var opin_prio = 0, opout_prio = 0;
 
-	var maxOp = 18500000;
+	var maxOp = 19000000;
 	while (getOperations() < maxOp && count(population) < 30) {
 		__obstacles = baseObstacles;
 		var actions =@ mutateActions([[]], gameState);
@@ -442,10 +442,8 @@ function main() {
 	var elected =@ population[0](value);
 	debug('value = ' + value);
 	debugC('action count: ' + count(elected[0]), BEST_COLOR);
-	//debugC(elected, COLOR_BLUE);
 	ACTIONS_QUEUE =@ elected;
 	aIter(act)(shift(ACTIONS_QUEUE));
-	//sayShit();
 }
 
 debug(getOperations() + 'op');
