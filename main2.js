@@ -332,23 +332,23 @@ function evaluateState(o) {
 			}
 		}
 
-		return (1 + xeDist)
-			 * (1 + xaDist)
-			 * (1 + ninfDiv(xeLifes)(oeLifes))
-			 * (1 + ninfDiv(xeAlives)(oeAlives))
-			 * (1 + xeminHPR)
-			 * (1 + infDiv(oaLifes)(xaLifes))
-			 * (1 + infDiv(oaAlives)(xaAlives))
-			 * (1 + xaminHPR)
-			 * (1 + xSelfHPR)
-			 * (1 + oneOr(oaASH)(xaASH))
-			 * (1 + oneOr(oaRSH)(xaRSH))
-			 * (1 + oneOr(oaSTR)(xaSTR))
-			 * (1 + oneOr(oaAGI)(xaAGI))
-			 * (1 + oneOr(xeTTP)(oeTTP))
-			 * (1 + oneOr(xeTMP)(oeTMP))
-			 * (1 + infDiv(oaTTP)(xaTTP))
-			 * (1 + infDiv(oaTMP)(xaTMP));
+		return (1 * xeDist                      + 1)
+			 * (1 * xaDist                      + 0)
+			 * (1 * ninfDiv(xeLifes)(oeLifes)   + 0)
+			 * (1 * ninfDiv(xeAlives)(oeAlives) + 0)
+			 * (1 * xeminHPR                    + 0)
+			 * (1 * infDiv(oaLifes)(xaLifes)    + 1)
+			 * (1 * infDiv(oaAlives)(xaAlives)  + 1)
+			 * (1 * xaminHPR                    + 1)
+			 * (1 * xSelfHPR                    + 1)
+			 * (1 * oneOr(oaASH)(xaASH)         + 0)
+			 * (1 * oneOr(oaRSH)(xaRSH)         + 0)
+			 * (1 * oneOr(oaSTR)(xaSTR)         + 0)
+			 * (1 * oneOr(oaAGI)(xaAGI)         + 0)
+			 * (1 * oneOr(xeTTP)(oeTTP)         + 0)
+			 * (1 * oneOr(xeTMP)(oeTMP)         + 0)
+			 * (1 * infDiv(oaTTP)(xaTTP)        + 1)
+			 * (1 * infDiv(oaTMP)(xaTMP)        + 1);
 	});
 }
 
@@ -442,8 +442,10 @@ function main() {
 	var elected =@ population[0](value);
 	debug('value = ' + value);
 	debugC('action count: ' + count(elected[0]), BEST_COLOR);
+	//debugC(elected, COLOR_BLUE);
 	ACTIONS_QUEUE =@ elected;
 	aIter(act)(shift(ACTIONS_QUEUE));
+	//sayShit();
 }
 
 debug(getOperations() + 'op');
