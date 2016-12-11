@@ -43,7 +43,7 @@ global SUMMONER = 1026;
 global NAME = 1027;
 global LEVEL = 1028;
 
-function getGameState() {
+function generateGameState() {
 	var ret = [];
 	var allies = getAliveAllies();
 	var enemies = getAliveEnemies();
