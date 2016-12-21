@@ -282,9 +282,11 @@ function evaluateState(o) {
 	var ninfDiv = defaultDiv(log(0));
 	return /*memo1*/(function(@state) {
 		var xs =@ state[S_ALL];
-		if (xs[oID] === null) { return -log(0); } // We died :(
-		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[oID][POS])(xs);
-		xs[oID][HP] -= dmgOnSelf;
+		var self =@ xs[oID];
+		if (self === null) { return -log(0); } // We died :(
+		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(self[POS])(xs);
+		self[HP] -= damage(dmgOnSelf, self);
+		if (self[HP] <= 0) { return -log(0); } // We died :(
 		removeDead(state)(xs[oID]);
 
 		aIter(compose(removeDead(state))(applyEffects))(xs);
@@ -315,11 +317,11 @@ function evaluateState(o) {
 		xaminHPR = 1 - xaminHPR;
 		xaminHPR /= 13;
 		xaminHPR += 12 / 13;
-		var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 1 * xs[oID][HP] + (-00));
+		var xSelfHPR = self === null ? -log(0) : self[THP] / min(self[THP], 1 * self[HP] + (-00));
 
 		var xeDist = 1;
 		var xaDist = 1;
-		var spos = xs[oID][POS];
+		var spos = self[POS];
 		if (spos !== null) {
 			var getDist =@ function(@e) {
 				return getPathLength(spos, xs[e][POS]);
@@ -331,24 +333,37 @@ function evaluateState(o) {
 				xaDist =@ max(1, (100 + max(0, xaDist - getSelf(state)[TMP])) / 100);
 			}
 		}
+		
+		var xeoeLifes = ninfDiv(xeLifes)(oeLifes);
+		var xeoeAlives = ninfDiv(xeAlives)(oeAlives);
+		var oaxaLifes = infDiv(oaLifes)(xaLifes);
+		var oaxaAlives = infDiv(oaAlives)(xaAlives);
+		var oaxaASH = oneOr(oaASH)(xaASH);
+		var oaxaRSH = oneOr(oaRSH)(xaRSH);
+		var oaxaSTR = oneOr(oaSTR)(xaSTR);
+		var oaxaAGI = oneOr(oaAGI)(xaAGI);
+		var xeoeTTP = oneOr(xeTTP)(oeTTP);
+		var xeoeTMP = oneOr(xeTMP)(oeTMP);
+		var oaxaTTP = infDiv(oaTTP)(xaTTP);
+		var oaxaTMP = infDiv(oaTMP)(xaTMP);
 
-		return (1 * xeDist                      + 1)
-			 * (1 * xaDist                      + 0)
-			 * (1 * ninfDiv(xeLifes)(oeLifes)   + 0)
-			 * (1 * ninfDiv(xeAlives)(oeAlives) + 0)
-			 * (1 * xeminHPR                    + 0)
-			 * (1 * infDiv(oaLifes)(xaLifes)    + 1)
-			 * (1 * infDiv(oaAlives)(xaAlives)  + 1)
-			 * (1 * xaminHPR                    + 1)
-			 * (1 * xSelfHPR                    + 1)
-			 * (1 * oneOr(oaASH)(xaASH)         + 0)
-			 * (1 * oneOr(oaRSH)(xaRSH)         + 0)
-			 * (1 * oneOr(oaSTR)(xaSTR)         + 0)
-			 * (1 * oneOr(oaAGI)(xaAGI)         + 0)
-			 * (1 * oneOr(xeTTP)(oeTTP)         + 0)
-			 * (1 * oneOr(xeTMP)(oeTMP)         + 0)
-			 * (1 * infDiv(oaTTP)(xaTTP)        + 1)
-			 * (1 * infDiv(oaTMP)(xaTMP)        + 1);
+		return (1 * xeDist     + 1)
+			 * (1 * xaDist     + 0)
+			 * (1 * xeoeLifes  + 0)
+			 * (1 * xeoeAlives + 0)
+			 * (1 * xeminHPR   + 0)
+			 * (1 * oaxaLifes  + 1)
+			 * (1 * oaxaAlives + 1)
+			 * (1 * xaminHPR   + 1)
+			 * (1 * xSelfHPR   + 1)
+			 * (1 * oaxaASH    + 0)
+			 * (1 * oaxaRSH    + 0)
+			 * (1 * oaxaSTR    + 0)
+			 * (1 * oaxaAGI    + 0)
+			 * (1 * xeoeTTP    + 0)
+			 * (1 * xeoeTMP    + 0)
+			 * (1 * oaxaTTP    + 1)
+			 * (1 * oaxaTMP    + 1);
 	});
 }
 
@@ -440,6 +455,7 @@ function main() {
 
 	var value;
 	var elected =@ population[0](value);
+
 	debug('value = ' + value);
 	debugC('action count: ' + count(elected[0]), BEST_COLOR);
 	//debugC(elected, COLOR_BLUE);
