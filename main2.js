@@ -333,7 +333,7 @@ function evaluateState(o) {
 				xaDist =@ max(1, (100 + max(0, xaDist - getSelf(state)[TMP])) / 100);
 			}
 		}
-		
+
 		var xeoeLifes = ninfDiv(xeLifes)(oeLifes);
 		var xeoeAlives = ninfDiv(xeAlives)(oeAlives);
 		var oaxaLifes = infDiv(oaLifes)(xaLifes);
@@ -414,7 +414,6 @@ function main() {
 	while (getOperations() < maxOp) {
 		population =@ pqTake(population)(10);
 		var i = 0;
-		if (getFightContext() === FIGHT_CONTEXT_BATTLE_ROYALE) {
 		var ancestors = [];
 		ancestors += population;
 		while (getOperations() < maxOp && i < 10) {
@@ -429,7 +428,6 @@ function main() {
 			opin_prio += getOperations();
 			popInsert(value, actions);
 			opout_prio += getOperations();
-		}
 		}
 		while (getOperations() < maxOp && count(population) < 30) {
 			__obstacles = baseObstacles;
