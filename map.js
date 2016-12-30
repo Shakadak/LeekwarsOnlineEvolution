@@ -116,7 +116,7 @@ function getLNeighbors(@cell) {
 }
 
 /**
-* getLNeighbors : Cell -> Array Cell
+* getANeighbors : Cell -> Array Cell
 */
 function getANeighbors(@cell) {
 	var ret = [];
