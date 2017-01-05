@@ -86,7 +86,7 @@ WEAPON_DOUBLE_GUN : function(@state) {
 		  (state[S_ALL]));
 },
 WEAPON_ELECTRISOR : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_1]; })
 		(canTargetCell(WEAPON_ELECTRISOR)(getSelf(state)[POS]))
@@ -94,14 +94,14 @@ WEAPON_ELECTRISOR : function(@state) {
 },
 WEAPON_FLAME_THROWER : WEAPON_FLAME_THROWER,
 WEAPON_GAZOR : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_3]; })
 		(canTargetCell(WEAPON_GAZOR)(getSelf(state)[POS]))
 		(state[S_ALL]);
 },
 WEAPON_GRENADE_LAUNCHER : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(WEAPON_GRENADE_LAUNCHER)(getSelf(state)[POS]))
@@ -281,7 +281,7 @@ CHIP_ARMORING : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_BALL_AND_CHAIN : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(CHIP_BALL_AND_CHAIN)(getSelf(state)[POS]))
@@ -327,7 +327,7 @@ CHIP_DOPING : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_DRIP : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ENEMY] || x[NAME] === 'puny_bulb' || x[HP] == x[THP]) { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(CHIP_DRIP)(getSelf(state)[POS]))
@@ -355,7 +355,7 @@ CHIP_FLAME : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_FLASH : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_1]; })
 		(canTargetCell(CHIP_FLASH)(getSelf(state)[POS]))
@@ -389,7 +389,7 @@ CHIP_ICE : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_ICEBERG : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[SUMMON]) { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(CHIP_ICEBERG)(getSelf(state)[POS]))
@@ -421,7 +421,7 @@ CHIP_LIBERATION : function(@state) {
 		})(state[S_ALL]));
 },
 CHIP_LIGHTNING : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(CHIP_LIGHTNING)(getSelf(state)[POS]))
@@ -440,7 +440,7 @@ CHIP_METALLIC_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_METALLIC_BULB, getSelf(state)[POS]);
 },
 CHIP_METEORITE : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(CHIP_METEORITE)(getSelf(state)[POS]))
@@ -460,7 +460,7 @@ CHIP_PEBBLE : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_PLAGUE : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[SUMMON]) { return []; }
 		return x[AREA_CIRCLE_3]; })
 		(canTargetCell(CHIP_PLAGUE)(getSelf(state)[POS]))
@@ -518,7 +518,7 @@ CHIP_ROCK : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_ROCKFALL : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(CHIP_ROCKFALL)(getSelf(state)[POS]))
@@ -558,7 +558,7 @@ CHIP_SOLIDIFICATION : function(@state) {
 		  (state[S_ALL]));
 },
 CHIP_SOPORIFIC : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
 		return x[AREA_CIRCLE_2]; })
 		(canTargetCell(CHIP_SOPORIFIC)(getSelf(state)[POS]))
@@ -593,7 +593,7 @@ CHIP_TELEPORTATION : function(@state) {
 },
 CHIP_THORN : CHIP_THORN,
 CHIP_TOXIN : function(@state) {
-	return aConcatFilterMap(function(@x){
+	return aFilterConcatMap(function(@x){
 		if (x[ALLY] || x[SUMMON]) { return []; }
 		return x[AREA_CIRCLE_1]; })
 		(canTargetCell(CHIP_TOXIN)(getSelf(state)[POS]))
