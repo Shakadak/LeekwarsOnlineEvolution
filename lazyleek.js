@@ -3216,7 +3216,7 @@ global cMiroirs =
 global ITEMS_TARGETS = [
 WEAPON_AXE : function(@state) {
 	var cando =@ canTargetCell(WEAPON_AXE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && cando(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3282,19 +3282,19 @@ WEAPON_B_LASER : function(@state) {
 },
 WEAPON_BROADSWORD : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_BROADSWORD)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 WEAPON_DESTROYER : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_DESTROYER)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 WEAPON_DOUBLE_GUN : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_DOUBLE_GUN)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3381,7 +3381,7 @@ WEAPON_GRENADE_LAUNCHER : function(@state) {
 },
 WEAPON_KATANA : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_KATANA)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3447,13 +3447,13 @@ WEAPON_LASER : function(@state) {
 },
 WEAPON_MACHINE_GUN : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_MACHINE_GUN)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 WEAPON_MAGNUM : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_MAGNUM)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3519,19 +3519,19 @@ WEAPON_M_LASER : function(@state) {
 },
 WEAPON_PISTOL : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_PISTOL)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 WEAPON_SHOTGUN : function(@state) {
 	var canDo =@ canTargetCell(WEAPON_SHOTGUN)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_ACCELERATION : function(@state) {
 	var canDo =@ canTargetCell(CHIP_ACCELERATION)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3544,19 +3544,19 @@ CHIP_ADRENALINE : function(@state) {
 },
 CHIP_ANTIDOTE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_ANTIDOTE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_ARMOR : function(@state) {
 	var canDo =@ canTargetCell(CHIP_ARMOR)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_ARMORING : function(@state) {
 	var canDo =@ canTargetCell(CHIP_ARMORING)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3569,13 +3569,13 @@ CHIP_BALL_AND_CHAIN : function(@state) {
 },
 CHIP_BANDAGE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_BANDAGE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[HP] != x[THP] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_BARK : function(@state) {
 	var canDo =@ canTargetCell(CHIP_BARK)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3588,19 +3588,19 @@ CHIP_BURNING : function(@state) {
 },
 CHIP_CARAPACE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_CARAPACE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_COLLAR : function(@state) {
 	var canDo =@ canTargetCell(CHIP_COLLAR)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_CURE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_CURE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[HP] != x[THP] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3609,7 +3609,7 @@ CHIP_DEVIL_STRIKE : function(@state) {
 },
 CHIP_DOPING : function(@state) {
 	var canDo =@ canTargetCell(CHIP_DOPING)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3622,13 +3622,13 @@ CHIP_DRIP : function(@state) {
 },
 CHIP_FEROCITY : function(@state) {
 	var canDo =@ canTargetCell(CHIP_FEROCITY)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_FERTILIZER : function(@state) {
 	var canDo =@ canTargetCell(CHIP_FERTILIZER)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3637,7 +3637,7 @@ CHIP_FIRE_BULB : function(@state) {
 },
 CHIP_FLAME : function(@state) {
 	var canDo =@ canTargetCell(CHIP_FLAME)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3650,13 +3650,13 @@ CHIP_FLASH : function(@state) {
 },
 CHIP_FORTRESS : function(@state) {
 	var canDo =@ canTargetCell(CHIP_FORTRESS)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_FRACTURE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_FRACTURE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3665,13 +3665,13 @@ CHIP_HEALER_BULB : function(@state) {
 },
 CHIP_HELMET : function(@state) {
 	var canDo =@ canTargetCell(CHIP_HELMET)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_ICE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_ICE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3687,13 +3687,13 @@ CHIP_ICED_BULB : function(@state) {
 },
 CHIP_INVERSION : function(@state) {
 	var canDo =@ canTargetCell(CHIP_INVERSION)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_LEATHER_BOOTS : function(@state) {
 	var canDo =@ canTargetCell(CHIP_LEATHER_BOOTS)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3719,7 +3719,7 @@ CHIP_LIGHTNING_BULB : function(@state) {
 },
 CHIP_LOAM : function(@state) {
 	var canDo =@ canTargetCell(CHIP_LOAM)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
 		  (state[S_ALL]));
 },
@@ -3742,13 +3742,13 @@ CHIP_MIRROR : function(@state) {
 },
 CHIP_MOTIVATION : function(@state) {
 	var canDo =@ canTargetCell(CHIP_MOTIVATION)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_PEBBLE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_PEBBLE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3761,7 +3761,7 @@ CHIP_PLAGUE : function(@state) {
 },
 CHIP_PROTEIN : function(@state) {
 	var canDo =@ canTargetCell(CHIP_PROTEIN)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3770,26 +3770,26 @@ CHIP_PUNY_BULB : function(@state) {
 },
 CHIP_RAGE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_RAGE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_RAMPART : function(@state) {
 	var canDo =@ canTargetCell(CHIP_RAMPART)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_REFLEXES : function(@state) {
 	var canDo =@ canTargetCell(CHIP_REFLEXES)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_REGENERATION : function(@state) {
 	var healValue = round(200 * (1 + getSelf(state)[WIS] / 100));
 	var cando =@ canTargetCell(CHIP_REGENERATION)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){
 				if (x[ALLY] && !x[SUMMON]) {
 					var hp = x[HP], thp = x[THP];
@@ -3802,14 +3802,14 @@ CHIP_REGENERATION : function(@state) {
 },
 CHIP_REMISSION : function(@state) {
 	var canDo =@ canTargetCell(CHIP_REMISSION)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_RESURRECTION : CHIP_RESURRECTION,
 CHIP_ROCK : function(@state) {
 	var canDo =@ canTargetCell(CHIP_ROCK)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3825,31 +3825,31 @@ CHIP_ROCKY_BULB : function(@state) {
 },
 CHIP_SEVEN_LEAGUE_BOOTS : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SEVEN_LEAGUE_BOOTS)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_SHIELD : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SHIELD)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_SHOCK : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SHOCK)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_SLOW_DOWN : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SLOW_DOWN)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_SOLIDIFICATION : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SOLIDIFICATION)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3862,25 +3862,25 @@ CHIP_SOPORIFIC : function(@state) {
 },
 CHIP_SPARK : function(@state) {
 	var canDo =@ canTargetCell(CHIP_SPARK)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_STALACTITE : function(@state) {
 	var cando =@ canTargetCell(CHIP_STALACTITE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && cando(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_STEROID : function(@state) {
 	var canDo =@ canTargetCell(CHIP_STEROID)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_STRETCHING : function(@state) {
 	var canDo =@ canTargetCell(CHIP_STRETCHING)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
@@ -3903,37 +3903,37 @@ CHIP_TOXIN : function(@state) {
 },
 CHIP_TRANQUILIZER : function(@state) {
 	var canDo =@ canTargetCell(CHIP_TRANQUILIZER)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_VACCINE : function(@state) {
 	var canDo =@ canTargetCell(CHIP_VACCINE)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_VENOM : function(@state) {
 	var canDo =@ canTargetCell(CHIP_VENOM)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_WALL : function(@state) {
 	var canDo =@ canTargetCell(CHIP_WALL)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_WARM_UP : function(@state) {
 	var canDo =@ canTargetCell(CHIP_WARM_UP)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
 CHIP_WHIP : function(@state) {
 	var canDo =@ canTargetCell(CHIP_WHIP)(getSelf(state)[POS]);
-	return daMap(function(@x){ return x[POS]; })
+	return daMap(access(POS))
 		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
 		  (state[S_ALL]));
 },
