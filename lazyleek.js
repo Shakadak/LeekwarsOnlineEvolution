@@ -4056,9 +4056,7 @@ function getAction(@gameState) {
 	var self =@ getSelf(gameState);
 	var pos = self[POS];
 	return aMap(delay(function(@item) {
-		debug("item we want targets from -> " + getItemName(item));
 		var targets =@ getTargets(gameState, item);
-		debug("targets -> " + targets);
 		return daMap(function(target) {
 			return function() {
 				var ret = [];
@@ -4148,7 +4146,6 @@ function mutateActions(@actions, @baseState) {
 			var list =@ getMove(clonedState);
 			list += list; // I want more chances to move.
 			opout_move += getOperations();
-			//debug(count(mutated_actions));
 			opin_attack += getOperations();
 			list += getAction(clonedState);
 			opout_attack += getOperations();
