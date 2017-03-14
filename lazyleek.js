@@ -3212,30 +3212,34 @@ global cMiroirs =
 
 ///////////////////////////////////////////////////////////////////////////
 
+function checkBoth(@entityType, @canTargetIt) { return function(@state) {
+	var entityTypeWithState = entityType(state), canTargetItWithState = canTargetIt(state);
+	return function(@entity) {
+		return entityTypeWithState(entity) && canTargetItWithState(entity[POS]);
+};};}
 
-global ITEMS_TARGETS = [
-WEAPON_AXE : function(@state) {
-	var cando =@ canTargetCell(WEAPON_AXE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && cando(x[POS]); })
-		(access(POS))
-		(state[S_ALL]);
-},
-WEAPON_B_LASER : function(@state) {
+function getSingleTargets(@entityType, @canTargetIt) {
+	var checkEntity = checkBoth(entityType, canTargetIt);
+	return function(@state) {
+		return aMapFilter(checkEntity(state))
+						 (access(POS))
+						 (state[S_ALL]);
+};}
+
+function getLaserTargets(@entityType, @item, @minr) { return function(@state) {
+	var entityTypeWithState = entityType(state);
 	var pos = getSelf(state)[POS];
 	if (pos === null) { return []; }
 	var cx = getCellX(pos);
 	var cy = getCellY(pos);
-	var minr = 2;
 	var ret = [];
-	var weapon = WEAPON_B_LASER;
 
 	var codir = sameDir(pos);
 	var all_id =@ aAppend(state[S_ALLIES])(state[S_ENEMIES]);
 	var all_entities = aFilter(function(@x) {
 			var tgt =@ x[POS];
-			return !x[SUMMON]
-				&& x[NAME] !== 'puny_bulb'
-				&& inRange(weapon)(pos)(tgt)
+			return entityTypeWithState(x)
+				&& inRange(item)(pos)(tgt)
 				&& lineOfSight(pos, tgt, all_id); })(state[S_ALL]);
 
 	var trigg = getCellFromXY(cx + minr, cy);
@@ -3279,685 +3283,187 @@ WEAPON_B_LASER : function(@state) {
 	}
 
 	return ret;
-},
-WEAPON_BROADSWORD : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_BROADSWORD)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		(access(POS))
+};}
+
+function getAreaTargets(@prepareTargets, @filterTargets) { return function(@state) {
+	return aFilterConcatMap(prepareTargets(state))
+		(filterTargets(state))
 		(state[S_ALL]);
-},
-WEAPON_DESTROYER : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_DESTROYER)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-WEAPON_DOUBLE_GUN : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_DOUBLE_GUN)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-WEAPON_ELECTRISOR : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_1]; })
-		(canTargetCell(WEAPON_ELECTRISOR)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-WEAPON_FLAME_THROWER : function(@state) {
-	var pos = getSelf(state)[POS];
-	var cx = getCellX(pos);
-	var cy = getCellY(pos);
-	var minr = 2;
-	var ret = [];
-	var weapon = WEAPON_FLAME_THROWER;
+};}
 
-	var codir = sameDir(pos);
-	var all_id =@ aAppend(state[S_ALLIES])(state[S_ENEMIES]);
-	var all_entities = aFilter(function(@x) {
-			var tgt =@ x[POS];
-			return x[ENEMY]
-				&& !x[SUMMON]
-				&& inRange(weapon)(pos)(tgt)
-				&& lineOfSight(pos, tgt, all_id); })
-		(state[S_ALL]);
+function prepareArea(@isTarget, @area) { return function(@state) {
+	var isTargetWithState = isTarget(state);
+	return function(@entity) {
+		return isTargetWithState(entity) ? entity[area] : [];
+};};}
 
-	var trigg = getCellFromXY(cx + minr, cy);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
+function entityToBeKilled(@state) { return function(@entity) {
+	return entity[ENEMY] && entity[NAME] !== 'puny_bulb';
+};}
+
+function leekToBeKilled(@state) { return function(@entity) {
+	return entity[ENEMY] && entity[TYPE] === ENTITY_LEEK;
+};}
+
+function bulbeToBeKilled(@state) { return function(@entity) {
+	return entity[ENEMY] && entity[TYPE] === ENTITY_BULB;
+};}
+
+function allyToBeHelped(@state) { return function(@entity) {
+	return entity[ALLY] && entity[NAME] !== 'puny_bulb';
+};}
+
+function allyToBeHealed(@state) { return function(@entity) {
+	return entity[ALLY] && entity[HP] !== entity[THP] && entity[NAME] !== 'puny_bulb';
+};}
+
+function leekToBeHelped(@state) { return function(@entity) {
+	return entity[ALLY] && entity[TYPE] === ENTITY_LEEK;
+};}
+
+function leekToBeHealed(@state) { return function(@entity) {
+	return entity[ALLY] && entity[TYPE] === ENTITY_LEEK && entity[HP] !== entity[THP];
+};}
+
+function bulbeToBeHelped(@state) { return function(@entity) {
+	return entity[ALLY] && entity[SUMMON] && entity[NAME] !== 'puny_bulb';
+};}
+
+function bulbeToBeHealed(@state) { return function(@entity) {
+	return entity[ALLY] && entity[SUMMON] && entity[HP] !== entity[THP] && entity[NAME] !== 'puny_bulb';
+};}
+
+function entityToBeLiberated(@state) { return function(@entity) {
+	return entity[NAME] !== 'puny_bulb' && (inArray(state[S_ALLIES], entity[ID]) ?
+	  aAny(function(@y){return negativeEffects[y[0]];})(entity[EFFS])
+	: aAny(function(@y){return positiveEffects[y[0]];})(entity[EFFS]));
+};}
+
+function leekToBeSaved(@state) {
+	var healValue = round(200 * (1 + getSelf(state)[WIS] / 100));
+	return function(@entity) {
+	if (entity[ALLY] && !entity[SUMMON]) {
+		var hp = entity[HP], thp = entity[THP];
+		return (hp < 350 || (hp / thp) < 0.45 || (thp - hp) >= healValue);
 	}
+	return false;
+};}
 
-	trigg =@ getCellFromXY(cx - minr, cy);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
+function alliedLeekWithEffect(@effect) {return function(@state) { return function(@entity) {
+	return entity[ALLY] && !entity[SUMMON] && aAny(function(@eff){ return eff[0] === effect; })(entity[EFFS]);
+};};}
 
-	trigg =@ getCellFromXY(cx, cy + minr);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
+function anyEntity(@state) { return function(@entity) {
+	return entity[NAME] !== 'puny_bulb';
+};}
 
-	trigg =@ getCellFromXY(cx, cy - minr);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
+function canTargetCellWith(@item) { return function(@state) {
+	return canTargetCell(item)(getSelf(state)[POS]);
+};}
 
-	return ret;
-},
-WEAPON_GAZOR : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[SUMMON]) { return []; }
-		return x[AREA_CIRCLE_3]; })
-		(canTargetCell(WEAPON_GAZOR)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-WEAPON_GRENADE_LAUNCHER : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(WEAPON_GRENADE_LAUNCHER)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-WEAPON_KATANA : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_KATANA)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-WEAPON_LASER : function(@state) {
-	var pos = getSelf(state)[POS];
-	var cx = getCellX(pos);
-	var cy = getCellY(pos);
-	var minr = 2;
-	var ret = [];
-	var weapon = WEAPON_LASER;
-
-	var codir = sameDir(pos);
-	var all_id =@ aAppend(state[S_ALLIES])(state[S_ENEMIES]);
-	var all_entities = aFilter(function(@x) {
-			var tgt =@ x[POS];
-			return x[ENEMY]
-				&& x[NAME] !== 'puny_bulb'
-				&& inRange(weapon)(pos)(tgt)
-				&& lineOfSight(pos, tgt, all_id); })
-		(state[S_ALL]);
-
-	var trigg = getCellFromXY(cx + minr, cy);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	trigg =@ getCellFromXY(cx - minr, cy);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	trigg =@ getCellFromXY(cx, cy + minr);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	trigg =@ getCellFromXY(cx, cy - minr);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	return ret;
-},
-WEAPON_MACHINE_GUN : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_MACHINE_GUN)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-WEAPON_MAGNUM : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_MAGNUM)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-WEAPON_M_LASER : function(@state) {
-	var pos = getSelf(state)[POS];
-	var cx = getCellX(pos);
-	var cy = getCellY(pos);
-	var minr = 4;
-	var ret = [];
-	var weapon = WEAPON_M_LASER;
-
-	var codir = sameDir(pos);
-	var all_id =@ aAppend(state[S_ALLIES])(state[S_ENEMIES]);
-	var all_entities = aFilter(function(@x) {
-			var tgt =@ x[POS];
-			return x[ENEMY]
-				&& x[NAME] !== 'puny_bulb'
-				&& inRange(weapon)(pos)(tgt)
-				&& lineOfSight(pos, tgt, all_id); })
-		(state[S_ALL]);
-
-	var trigg = getCellFromXY(cx + minr, cy);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	trigg =@ getCellFromXY(cx - minr, cy);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	trigg =@ getCellFromXY(cx, cy + minr);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	trigg =@ getCellFromXY(cx, cy - minr);
-	if (trigg !== null) {
-		var codir2 =@ codir(trigg);
-		if (lineOfSight(pos, trigg) && aAny(function(@target) {
-				return codir2(target[POS]);
-			})(all_entities)) {
-			push(ret, trigg);
-		}
-	}
-
-	return ret;
-},
-WEAPON_PISTOL : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_PISTOL)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-WEAPON_SHOTGUN : function(@state) {
-	var canDo =@ canTargetCell(WEAPON_SHOTGUN)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_ACCELERATION : function(@state) {
-	var canDo =@ canTargetCell(CHIP_ACCELERATION)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_ADRENALINE : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ENEMY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_1]; })
-		(canTargetCell(CHIP_ADRENALINE)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_ANTIDOTE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_ANTIDOTE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_ARMOR : function(@state) {
-	var canDo =@ canTargetCell(CHIP_ARMOR)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_ARMORING : function(@state) {
-	var canDo =@ canTargetCell(CHIP_ARMORING)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_BALL_AND_CHAIN : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_BALL_AND_CHAIN)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_BANDAGE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_BANDAGE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[HP] != x[THP] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_BARK : function(@state) {
-	var canDo =@ canTargetCell(CHIP_BARK)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_BURNING : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || !x[SUMMON] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_3]; })
-		(canTargetCell(CHIP_BURNING)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_CARAPACE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_CARAPACE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_COLLAR : function(@state) {
-	var canDo =@ canTargetCell(CHIP_COLLAR)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_CURE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_CURE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[HP] != x[THP] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_DEVIL_STRIKE : function(@state) {
-	return [getSelf(state)[POS]];
-},
-CHIP_DOPING : function(@state) {
-	var canDo =@ canTargetCell(CHIP_DOPING)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_DRIP : function(@state) {
-	return aFilterConcatMap(function(@x){
-			return (x[ENEMY] || x[NAME] === 'puny_bulb' || x[HP] == x[THP]) ? [] : x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_DRIP)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-/* CHIP_DEVIL_STRIKE : @state ->
-	[getSelf(state).pos]
-,
-CHIP_DOPING : @state => {
-	let canDo =@ canTargetCell(CHIP_DOPING)(getSelf(state).pos)
-	aMapFilter(@x -> x.ally && !x.summon && canDo(x.pos))
-		  (@x -> x.pos)
-		  (state.s_all)
-},
-CHIP_DRIP : @state ->
-	aFilterConcatMap(@x -> (x.enemy || x.name === 'puny_bulb' || x.hp == x.thp) ? [] : x.area_circle_2 )
-		(canTargetCell(CHIP_DRIP)(getSelf(state).pos))
-		(state.s_all);
-},*/
-CHIP_FEROCITY : function(@state) {
-	var canDo =@ canTargetCell(CHIP_FEROCITY)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_FERTILIZER : function(@state) {
-	var canDo =@ canTargetCell(CHIP_FERTILIZER)(getSelf(state)[POS]);
-	return daMap(access(POS))
-		  (aFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (state[S_ALL]));
-},
+global ITEMS_TARGETS = [
+WEAPON_AXE : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_AXE)),
+WEAPON_B_LASER : getLaserTargets(anyEntity, WEAPON_B_LASER, 2),
+WEAPON_BROADSWORD : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_BROADSWORD)),
+WEAPON_DESTROYER : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_DESTROYER)),
+WEAPON_DOUBLE_GUN : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_DOUBLE_GUN)),
+WEAPON_ELECTRISOR : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_1), canTargetCellWith(WEAPON_ELECTRISOR)),
+WEAPON_FLAME_THROWER : getLaserTargets(entityToBeKilled, WEAPON_FLAME_THROWER, 2),
+WEAPON_GAZOR : getAreaTargets(prepareArea(leekToBeKilled, AREA_CIRCLE_3), canTargetCellWith(WEAPON_GAZOR)),
+WEAPON_GRENADE_LAUNCHER : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(WEAPON_GRENADE_LAUNCHER)),
+WEAPON_KATANA : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_KATANA)),
+WEAPON_LASER : getLaserTargets(entityToBeKilled, WEAPON_LASER, 2),
+WEAPON_MACHINE_GUN : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_MACHINE_GUN)),
+WEAPON_MAGNUM : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_MAGNUM)),
+WEAPON_M_LASER : getLaserTargets(entityToBeKilled, WEAPON_M_LASER, 4),
+WEAPON_PISTOL : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_PISTOL)),
+WEAPON_SHOTGUN : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_SHOTGUN)),
+CHIP_ACCELERATION : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_ACCELERATION)),
+CHIP_ADRENALINE : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_1), canTargetCellWith(CHIP_ADRENALINE)),
+CHIP_ANTIDOTE : getSingleTargets(alliedLeekWithEffect(EFFECT_POISON), canTargetCellWith(CHIP_ANTIDOTE)),
+CHIP_ARMOR : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_ARMOR)),
+CHIP_ARMORING : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_ARMORING)),
+CHIP_BALL_AND_CHAIN : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_BALL_AND_CHAIN)),
+CHIP_BANDAGE : getSingleTargets(allyToBeHealed, canTargetCellWith(CHIP_BANDAGE)),
+CHIP_BARK : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_BARK)),
+CHIP_BURNING : getAreaTargets(prepareArea(bulbeToBeKilled, AREA_CIRCLE_3), canTargetCellWith(CHIP_BURNING)),
+CHIP_CARAPACE : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_CARAPACE)),
+CHIP_COLLAR : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_COLLAR)),
+CHIP_CURE : getSingleTargets(leekToBeHealed, canTargetCellWith(CHIP_CURE)),
+CHIP_DEVIL_STRIKE : function(@state) { return [getSelf(state)[POS]]; },
+CHIP_DOPING : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_DOPING)),
+CHIP_DRIP : getAreaTargets(prepareArea(allyToBeHealed, AREA_CIRCLE_2), canTargetCellWith(CHIP_DRIP)),
+CHIP_FEROCITY : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_FEROCITY)),
+CHIP_FERTILIZER : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_FERTILIZER)),
 CHIP_FIRE_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_FIRE_BULB, getSelf(state)[POS]);
 },
-CHIP_FLAME : function(@state) {
-	var canDo =@ canTargetCell(CHIP_FLAME)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_FLASH : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_1]; })
-		(canTargetCell(CHIP_FLASH)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_FORTRESS : function(@state) {
-	var canDo =@ canTargetCell(CHIP_FORTRESS)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_FRACTURE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_FRACTURE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
+CHIP_FLAME : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_FLAME)),
+CHIP_FLASH : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_1), canTargetCellWith(CHIP_FLASH)),
+CHIP_FORTRESS : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_FORTRESS)),
+CHIP_FRACTURE : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_FRACTURE)),
 CHIP_HEALER_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_HEALER_BULB, getSelf(state)[POS]);
 },
-CHIP_HELMET : function(@state) {
-	var canDo =@ canTargetCell(CHIP_HELMET)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_ICE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_ICE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_ICEBERG : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[SUMMON]) { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_ICEBERG)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
+CHIP_HELMET : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_HELMET)),
+CHIP_ICE : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_ICE)),
+CHIP_ICEBERG : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_ICEBERG)),
 CHIP_ICED_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_ICED_BULB, getSelf(state)[POS]);
 },
-CHIP_INVERSION : function(@state) {
-	var canDo =@ canTargetCell(CHIP_INVERSION)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_LEATHER_BOOTS : function(@state) {
-	var canDo =@ canTargetCell(CHIP_LEATHER_BOOTS)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_LIBERATION : function(@state) {
-	var canDo =@ canTargetCell(CHIP_LIBERATION)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){
-		return canDo(x[POS])
-			&& (inArray(state[S_ALLIES], x[ID]) ?
-			  aAny(function(@y){return negativeEffects[y[0]];})(x[EFFS])
-			: aAny(function(@y){return positiveEffects[y[0]];})(x[EFFS]));
-		})
-		(access(POS))
-		(state[S_ALL]);
-},
-CHIP_LIGHTNING : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_LIGHTNING)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
+CHIP_INVERSION : getSingleTargets(anyEntity, canTargetCellWith(CHIP_INVERSION)),
+CHIP_LEATHER_BOOTS : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_LEATHER_BOOTS)),
+CHIP_LIBERATION : getSingleTargets(entityToBeLiberated, canTargetCellWith(CHIP_LIBERATION)),
+CHIP_LIGHTNING : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_LIGHTNING)),
 CHIP_LIGHTNING_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_LIGHTNING_BULB, getSelf(state)[POS]);
 },
-CHIP_LOAM : function(@state) {
-	var canDo =@ canTargetCell(CHIP_LOAM)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON]; })
-		  (access(POS))
-		  (state[S_ALL]);
-},
+CHIP_LOAM : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_LOAM)),
 CHIP_METALLIC_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_METALLIC_BULB, getSelf(state)[POS]);
 },
-CHIP_METEORITE : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_METEORITE)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_MIRROR : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ENEMY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_MIRROR)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_MOTIVATION : function(@state) {
-	var canDo =@ canTargetCell(CHIP_MOTIVATION)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_PEBBLE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_PEBBLE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_PLAGUE : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[SUMMON]) { return []; }
-		return x[AREA_CIRCLE_3]; })
-		(canTargetCell(CHIP_PLAGUE)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_PROTEIN : function(@state) {
-	var canDo =@ canTargetCell(CHIP_PROTEIN)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
+CHIP_METEORITE : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_METEORITE)),
+CHIP_MIRROR : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_2), canTargetCellWith(CHIP_MIRROR)),
+CHIP_MOTIVATION : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_MOTIVATION)),
+CHIP_PEBBLE : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_PEBBLE)),
+CHIP_PLAGUE : getAreaTargets(prepareArea(leekToBeKilled, AREA_CIRCLE_3), canTargetCellWith(CHIP_PLAGUE)),
+CHIP_PROTEIN : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_PROTEIN)),
 CHIP_PUNY_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_PUNY_BULB, getSelf(state)[POS]);
 },
-CHIP_RAGE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_RAGE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_RAMPART : function(@state) {
-	var canDo =@ canTargetCell(CHIP_RAMPART)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_REFLEXES : function(@state) {
-	var canDo =@ canTargetCell(CHIP_REFLEXES)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_REGENERATION : function(@state) {
-	var healValue = round(200 * (1 + getSelf(state)[WIS] / 100));
-	var canDo =@ canTargetCell(CHIP_REGENERATION)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){
-				if (x[ALLY] && !x[SUMMON]) {
-					var hp = x[HP], thp = x[THP];
-					return (hp < 350 || (hp / thp) < 0.45 || (thp - hp) >= healValue)
-						&& canDo(x[POS]);
-				}
-				return false;
-			})
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_REMISSION : function(@state) {
-	var canDo =@ canTargetCell(CHIP_REMISSION)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
+CHIP_RAGE : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_RAGE)),
+CHIP_RAMPART : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_RAMPART))
+CHIP_REFLEXES : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_REFLEXES)),
+CHIP_REGENERATION : getSingleTargets(leekToBeSaved, canTargetCellWith(CHIP_REGENERATION)),
+CHIP_REMISSION : getSingleTargets(bulbeToBeHealed, canTargetCellWith(CHIP_REMISSION)),
 CHIP_RESURRECTION : CHIP_RESURRECTION,
-CHIP_ROCK : function(@state) {
-	var canDo =@ canTargetCell(CHIP_ROCK)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_ROCKFALL : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_ROCKFALL)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
+CHIP_ROCK : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_ROCK)),
+CHIP_ROCKFALL : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_ROCKFALL)),
 CHIP_ROCKY_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_ROCKY_BULB, getSelf(state)[POS]);
 },
-CHIP_SEVEN_LEAGUE_BOOTS : function(@state) {
-	var canDo =@ canTargetCell(CHIP_SEVEN_LEAGUE_BOOTS)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_SHIELD : function(@state) {
-	var canDo =@ canTargetCell(CHIP_SHIELD)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_SHOCK : function(@state) {
-	var canDo =@ canTargetCell(CHIP_SHOCK)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_SLOW_DOWN : function(@state) {
-	var canDo =@ canTargetCell(CHIP_SLOW_DOWN)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_SOLIDIFICATION : function(@state) {
-	var canDo =@ canTargetCell(CHIP_SOLIDIFICATION)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_SOPORIFIC : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_SOPORIFIC)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_SPARK : function(@state) {
-	var canDo =@ canTargetCell(CHIP_SPARK)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_STALACTITE : function(@state) {
-	var cando =@ canTargetCell(CHIP_STALACTITE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && x[NAME] !== 'puny_bulb' && cando(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_STEROID : function(@state) {
-	var canDo =@ canTargetCell(CHIP_STEROID)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_STRETCHING : function(@state) {
-	var canDo =@ canTargetCell(CHIP_STRETCHING)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
+CHIP_SEVEN_LEAGUE_BOOTS : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_SEVEN_LEAGUE_BOOTS)),
+CHIP_SHIELD : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_SHIELD)),
+CHIP_SHOCK : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_SHOCK)),
+CHIP_SLOW_DOWN : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_SLOW_DOWN)),
+CHIP_SOLIDIFICATION : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_SOLIDIFICATION)),
+CHIP_SOPORIFIC : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_SOPORIFIC)),
+CHIP_SPARK : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_SPARK)),
+CHIP_STALACTITE : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_STALACTITE)),
+CHIP_STEROID : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_STEROID)),
+CHIP_STRETCHING : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_STRETCHING)),
 CHIP_TELEPORTATION : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_TELEPORTATION, getSelf(state)[POS]);
 },
-CHIP_THORN : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ENEMY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_2]; })
-		(canTargetCell(CHIP_THORN)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_TOXIN : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ALLY] || x[SUMMON]) { return []; }
-		return x[AREA_CIRCLE_1]; })
-		(canTargetCell(CHIP_TOXIN)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
-CHIP_TRANQUILIZER : function(@state) {
-	var canDo =@ canTargetCell(CHIP_TRANQUILIZER)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_VACCINE : function(@state) {
-	var canDo =@ canTargetCell(CHIP_VACCINE)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_VENOM : function(@state) {
-	var canDo =@ canTargetCell(CHIP_VENOM)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ENEMY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_WALL : function(@state) {
-	var canDo =@ canTargetCell(CHIP_WALL)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_WARM_UP : function(@state) {
-	var canDo =@ canTargetCell(CHIP_WARM_UP)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && !x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_WHIP : function(@state) {
-	var canDo =@ canTargetCell(CHIP_WHIP)(getSelf(state)[POS]);
-	return aMapFilter(function(@x){ return x[ALLY] && x[SUMMON] && canDo(x[POS]); })
-		  (access(POS))
-		  (state[S_ALL]);
-},
-CHIP_WINGED_BOOTS : function(@state) {
-	return aFilterConcatMap(function(@x){
-		if (x[ENEMY] || x[NAME] === 'puny_bulb') { return []; }
-		return x[AREA_CIRCLE_1]; })
-		(canTargetCell(CHIP_WINGED_BOOTS)(getSelf(state)[POS]))
-		(state[S_ALL]);
-},
+CHIP_THORN : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_2), canTargetCellWith(CHIP_THORN)),
+CHIP_TOXIN : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_TOXIN)),
+CHIP_TRANQUILIZER : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_TRANQUILIZER)),
+CHIP_VACCINE : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_VACCINE)),
+CHIP_VENOM : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_VENOM)),
+CHIP_WALL : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_WALL)),
+CHIP_WARM_UP : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_WARM_UP)),
+CHIP_WHIP : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_WHIP)),
+CHIP_WINGED_BOOTS : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_1), canTargetCellWith(CHIP_WINGED_BOOTS)),
 ];
 
 
