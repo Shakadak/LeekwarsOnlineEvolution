@@ -3,7 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
-global cry = ["WHY DID IT HAVE TO LEEK?!", "YOLO!","CARPE DIEM!", "AAAAAAH!", "GIVE ME YOUR SOIL!!!", "WATCH MY BULB-FLEX!!!", "JE M'AIME!", "I NEED MORE FERTILIZER!!!", "...", "DOT! DOT! DOT!", "POINT! POINT! POINT!", "PLEASE DON'T COOK ME UP!", "WHAT THE GARDEN AM I DOING ???", "BOILED!", "FRIED!", "RAW!", "FROZEN!", "HOW MUCH DET-DEDOTATED HAY?", "ACHOO!", "I WANT TO LEEKITY LEEK YOU!!!", "AUGH!", "DON'T HARVEST ME! I STILL HAVEN'T GROWN MY PISTIL!", "LEEEK! THAT'S SOME FLESHY LEAVES YOU'VE GOT HERE!", "OH BULB! MIND SHARING HOW YOU GROWED THOSE STEMS?", "BELIEVE ME, I'M USUALLY A CALM PLANT!", "MY ROOTS ARE DRY!", "BREATHE OUT, BREATHE IN!", "DO YOU EVEN HILL?!", "POURQUOI LE POIREAU A-T-IL TRAVERSÉ LA ROUTE?", "MY ROOTS BEING LUSCIOUS DON'T MEAN I'M A HIPSTER.", "YOU'VE BEEN SQUASHED!", "WHO'S INVASIVE NOW?"];
+global cry = ["WHY DID IT HAVE TO LEEK?!", "YOLO!","CARPE DIEM!", "AAAAAAH!", "GIVE ME YOUR SOIL!!!", "WATCH MY BULB-FLEX!!!", "JE M'AIME!", "I NEED MORE FERTILIZER!!!", "...", "DOT! DOT! DOT!", "POINT! POINT! POINT!", "PLEASE DON'T COOK ME UP!", "WHAT THE GARDEN AM I DOING ???", "BOILED!", "FRIED!", "RAW!", "FROZEN!", "HOW MUCH DET-DEDOTATED HAY?", "ACHOO!", "I WANT TO LEEKITY LEEK YOU!!!", "AUGH!", "DON'T HARVEST ME! I STILL HAVEN'T GROWN MY PISTIL!", "LEEEK! THAT'S SOME FLESHY LEAVES YOU'VE GOT HERE!", "OH BULB! MIND SHARING HOW YOU GROWED THOSE STEMS?", "BELIEVE ME, I'M USUALLY A CALM PLANT!", "MY ROOTS ARE DRY!", "BREATHE OUT, BREATHE IN!", "DO YOU EVEN HILL?!", "POURQUOI LE POIREAU A-T-IL TRAVERSÉ LA ROUTE?", "MY ROOTS BEING LUSCIOUS DON'T MEAN I'M A HIPSTER.", "YOU'VE BEEN SQUASHED!", "WHO'S INVASIVE NOW?", "🏃💨", "Vous n'avez pas d'IA."];
 global crySize = count(cry);
 
 function sayShit(){say(cry[randInt(0, crySize)]);}
@@ -1685,8 +1685,18 @@ CHIP_WHIP : CHIP_WHIP,
 CHIP_WINGED_BOOTS : CHIP_WINGED_BOOTS,
 ];
 
+global ITEM_AOE_RADIUS = arrayMap(ITEMS, function(@item, @_) {
+	var a = getItemArea(item);
+	return	a === AREA_CIRCLE_1	? 1 :
+			a === AREA_CIRCLE_2 ? 2 :
+			a === AREA_CIRCLE_3 ? 3 :
+			0;
+});
 global ITEM_MAX_RANGE = arrayMap(ITEMS, function(@item, @_) {return getItemMaxRange(item);});
 global ITEM_MIN_RANGE = arrayMap(ITEMS, function(@item, @_) {return getItemMinRange(item);});
+global ITEM_EFFECTIVE_MAX_RANGE = arrayMap(ITEMS, function(@item, @_) { return ITEM_MAX_RANGE[item] + ITEM_AOE_RADIUS[item]; });
+
+global ITEM_COST = arrayMap(ITEMS, function(@item, @_) {return getItemMaxRange(item);});
 
 global ITEM_DMG_TP = [
 WEAPON_AXE : 10.08,
@@ -1789,6 +1799,7 @@ global S_ENEMIES = 102;
 global S_ALL = 103;
 global S_ORDER = 104;
 global S_MAX_ID = 105;
+global S_NB_SUMMONED = 106;
 
 global THP = 1000;
 global HP = 1001;
@@ -1834,13 +1845,13 @@ keySort(os);
 			, S_ALL		: keysMap(getEntityState)(all)
 			, S_ORDER	: os
 			, S_MAX_ID	: max_id
+			, S_NB_SUMMONED : count(aFilter(isSummon)(allies))
 			];
 }
 
 function getEntityState(e) {
 	var unequipped = getWeapons(e);
 	var equipped = getWeapon(e);
-	removeElement(unequipped, equipped);
 	return	[ THP	: getTotalLife(e)
 			, HP	: getLife(e)
 			, TMP	: getTotalMP(e)
@@ -1882,18 +1893,21 @@ function getSelf(@state) { return state[S_ALL][state[S_SELF]]; }
 function getActionListFromState(@s) {
 	var self =@ getSelf(s);
 	var tp =@ self[TP];
-	var thp =@ self[THP];
-	var hp =@ self[HP];
+	var pos = self[POS];
 	var eq =@ self[EQ];
-	var fWeap =@ function(@w) { return tp >= getWeaponCost(w) + 1; };
+	var fWeap =@ function(@w) { return tp >= (getItemCost(w) + (w !== eq)) && aAny(function(@entity) { return ITEMS_TARGETING_AVAILABILITY[w](s)(entity) && getCellDistance(pos, entity[POS]) <= ITEM_EFFECTIVE_MAX_RANGE[w];})(s[S_ALL]); };
+	var opAct_ = getOperations();
 	var weapons =@ aFilter(fWeap)(self[UNEQ]);
-	if (eq !== null && tp >= getWeaponCost(eq)) { push(weapons, eq); }
+	totalOpActionList += getOperations() - opAct_;
 	var chips = [];
 	for (var c : var cd in self[CHIPS]) {
 		if (cd > 0) { continue; }
-		if (tp >= getChipCost(c)) {
+		if (cBulbes[c] && s[S_NB_SUMMONED] >= 6) { continue; }
+		opAct_ = getOperations();
+		if (tp >= getItemCost(c) && aAny(function(@entity) { return ITEMS_TARGETING_AVAILABILITY[c](s)(entity) && getCellDistance(pos, entity[POS]) <= ITEM_EFFECTIVE_MAX_RANGE[c];})(s[S_ALL])) {
 			push(chips, c);
 		}
+		totalOpActionList += getOperations() - opAct_;
 	}
 	return	aAppend(weapons)(chips);
 }
@@ -2422,7 +2436,7 @@ CHIP_CURE : function(@state, @caster, @center) {
 	};},
 CHIP_DEVIL_STRIKE : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
-	var dmg = rawEff(21.5, caster[STR]) * crit;
+	var dmg = rawEff(25, caster[STR]) * crit;
 	var ls = caster[WIS] / 1000;
 	return function(@target) {
 		var tgt = target[POS];
@@ -3285,10 +3299,13 @@ function getLaserTargets(@entityType, @item, @minr) { return function(@state) {
 	return ret;
 };}
 
-function getAreaTargets(@prepareTargets, @filterTargets) { return function(@state) {
-	return aFilterConcatMap(prepareTargets(state))
-		(filterTargets(state))
-		(state[S_ALL]);
+function getAreaTargets(@prepareTargets, @filterTargets) {
+	return function(@state) {
+		var stateXtarget = filterTargets(state);
+		var targets = [];
+		return aFilterConcatMap(prepareTargets(state))
+			(function(@x) { return targets[x] !== null ? false : targets[x] = stateXtarget(x); })
+			(state[S_ALL]);
 };}
 
 function prepareArea(@isTarget, @area) { return function(@state) {
@@ -3360,6 +3377,95 @@ function anyEntity(@state) { return function(@entity) {
 function canTargetCellWith(@item) { return function(@state) {
 	return canTargetCell(item)(getSelf(state)[POS]);
 };}
+
+global ITEMS_TARGETING_AVAILABILITY = [
+WEAPON_AXE : entityToBeKilled,
+WEAPON_B_LASER : anyEntity,
+WEAPON_BROADSWORD : entityToBeKilled,
+WEAPON_DESTROYER : entityToBeKilled,
+WEAPON_DOUBLE_GUN : entityToBeKilled,
+WEAPON_ELECTRISOR : entityToBeKilled,
+WEAPON_FLAME_THROWER : entityToBeKilled,
+WEAPON_GAZOR : leekToBeKilled,
+WEAPON_GRENADE_LAUNCHER : entityToBeKilled,
+WEAPON_KATANA : entityToBeKilled,
+WEAPON_LASER : entityToBeKilled,
+WEAPON_MACHINE_GUN : entityToBeKilled,
+WEAPON_MAGNUM : entityToBeKilled,
+WEAPON_M_LASER : entityToBeKilled,
+WEAPON_PISTOL : entityToBeKilled,
+WEAPON_SHOTGUN : entityToBeKilled,
+CHIP_ACCELERATION : bulbeToBeHelped,
+CHIP_ADRENALINE : leekToBeHelped,
+CHIP_ANTIDOTE : alliedLeekWithEffect(EFFECT_POISON),
+CHIP_ARMOR : leekToBeHelped,
+CHIP_ARMORING : leekToBeHelped,
+CHIP_BALL_AND_CHAIN : entityToBeKilled,
+CHIP_BANDAGE : allyToBeHealed,
+CHIP_BARK : bulbeToBeHelped,
+CHIP_BURNING : bulbeToBeKilled,
+CHIP_CARAPACE : bulbeToBeHelped,
+CHIP_COLLAR : bulbeToBeHelped,
+CHIP_CURE : leekToBeHealed,
+CHIP_DEVIL_STRIKE : leekToBeKilled,
+CHIP_DOPING : leekToBeHelped,
+CHIP_DRIP : allyToBeHealed,
+CHIP_FEROCITY : bulbeToBeHelped,
+CHIP_FERTILIZER : bulbeToBeHelped,
+CHIP_FIRE_BULB : anyEntity,
+CHIP_FLAME : entityToBeKilled,
+CHIP_FLASH : entityToBeKilled,
+CHIP_FORTRESS : leekToBeHelped,
+CHIP_FRACTURE : leekToBeKilled,
+CHIP_HEALER_BULB : anyEntity,
+CHIP_HELMET : leekToBeHelped,
+CHIP_ICE : entityToBeKilled,
+CHIP_ICEBERG : entityToBeKilled,
+CHIP_ICED_BULB : anyEntity,
+CHIP_INVERSION : anyEntity,
+CHIP_LEATHER_BOOTS : leekToBeHelped,
+CHIP_LIBERATION : entityToBeLiberated,
+CHIP_LIGHTNING : entityToBeKilled,
+CHIP_LIGHTNING_BULB : anyEntity,
+CHIP_LOAM : bulbeToBeHelped,
+CHIP_METALLIC_BULB : anyEntity,
+CHIP_METEORITE : entityToBeKilled,
+CHIP_MIRROR : leekToBeHelped,
+CHIP_MOTIVATION : leekToBeHelped,
+CHIP_PEBBLE : entityToBeKilled,
+CHIP_PLAGUE : leekToBeKilled,
+CHIP_PROTEIN : leekToBeHelped,
+CHIP_PUNY_BULB : anyEntity,
+CHIP_RAGE : leekToBeHelped,
+CHIP_RAMPART : leekToBeHelped,
+CHIP_REFLEXES : leekToBeHelped,
+CHIP_REGENERATION : leekToBeSaved,
+CHIP_REMISSION : bulbeToBeHealed,
+CHIP_RESURRECTION : "CHIP_RESURRECTION",
+CHIP_ROCK : entityToBeKilled,
+CHIP_ROCKFALL : entityToBeKilled,
+CHIP_ROCKY_BULB : anyEntity,
+CHIP_SEVEN_LEAGUE_BOOTS : leekToBeHelped,
+CHIP_SHIELD : leekToBeHelped,
+CHIP_SHOCK : entityToBeKilled,
+CHIP_SLOW_DOWN : leekToBeKilled,
+CHIP_SOLIDIFICATION : leekToBeHelped,
+CHIP_SOPORIFIC : entityToBeKilled,
+CHIP_SPARK : entityToBeKilled,
+CHIP_STALACTITE : entityToBeKilled,
+CHIP_STEROID : leekToBeHelped,
+CHIP_STRETCHING : leekToBeHelped,
+CHIP_TELEPORTATION : anyEntity,
+CHIP_THORN : leekToBeHelped,
+CHIP_TOXIN : leekToBeKilled,
+CHIP_TRANQUILIZER : leekToBeKilled,
+CHIP_VACCINE : leekToBeHelped,
+CHIP_VENOM : leekToBeKilled,
+CHIP_WALL : leekToBeHelped,
+CHIP_WARM_UP : leekToBeHelped,
+CHIP_WHIP : bulbeToBeHelped,
+CHIP_WINGED_BOOTS : leekToBeHelped,
+];
 
 global ITEMS_TARGETS = [
 WEAPON_AXE : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_AXE)),
@@ -3497,6 +3603,36 @@ function averageDmgFromLeeksOnCell(@p) { return function(@cell) { return functio
 	}, 0);
 };};}
 
+/**
+* getMLaserCellsTargetingCell : (State, Cell) -> [Cell]
+*/
+function getMLaserCellsTargetingCell(@state, @cell) {
+	var x = getCellX(cell);
+	var y = getCellY(cell);
+
+	var topleft = getCellFromXY(x - 4, y);
+	var topright = getCellFromXY(x, y - 4);
+	var bottomleft = getCellFromXY(x, y + 4);
+	var bottomright = getCellFromXY(x + 4, y);
+
+	var ret = [];
+	var ids =@ getAliveAllies();
+	ids += getAliveEnemies();
+	if (topleft !== null && lineOfSight(cell, topleft, ids)) {
+		push(ret, topleft);
+	}
+	if (topright !== null && lineOfSight(cell, topright, ids)) {
+		push(ret, topleft);
+	}
+	if (bottomleft !== null && lineOfSight(cell, bottomleft, ids)) {
+		push(ret, topleft);
+	}
+	if (bottomright !== null && lineOfSight(cell, bottomright, ids)) {
+		push(ret, topleft);
+	}
+	return ret;
+}
+
 ///////////////////////////////////////////////////////////////////////////
 
 global opin_move = 0, opout_move = 0;
@@ -3504,6 +3640,12 @@ global opin_attack = 0, opout_attack = 0;
 global opin_select = 0, opout_select = 0;
 global opin_mutate = 0, opout_mutate = 0;
 
+global totalOpActionList;
+totalOpActionList = 0;
+global wastedTargettingAttempt;
+wastedTargettingAttempt = 0;
+global wastedTargettingAttemptOperations;
+wastedTargettingAttemptOperations = 0;
 global totalPop;
 totalPop =@ 0;
 
@@ -3628,7 +3770,8 @@ function mutateActions(@actions, @baseState) {
 		clonedState =@ getLastState(actions_queue);
 		__obstacles =@ getLastObstacles(actions_queue);
 	}
-	if (getSelf(clonedState) === null) { return []; } // We died, no point continuing.
+	if (getSelf(clonedState) === null) {
+		debugW("[mutateActions] We died, this state shouldn't have been kept."); return []; } // We died, no point continuing.
 
 	while (true) {
 		var mutated_actions;
@@ -3645,6 +3788,8 @@ function mutateActions(@actions, @baseState) {
 			finished = false;
 
 			var action;
+			var previousState =@ clonedState;
+			var previousObstacles =@ __obstacles;
 			var gameTuple = uctuple3([], clonedState, __obstacles);
 			gameTuple(action, clonedState, __obstacles);
 
@@ -3662,17 +3807,31 @@ function mutateActions(@actions, @baseState) {
 				var i = randInt(0, count(curratedList) + 1);
 				var actionGenerator =@ curratedList[i];
 				if (actionGenerator === null) {
+					if (getSelf(clonedState)[EQ] !== WEAPON_M_LASER) {
+						push(action, delay(setWeapon)(WEAPON_M_LASER));
+					}
 					push(action, sayShit);
 					push(mutated_actions, gameTuple);
 					finished =@ true;
 					break;
 				}
+				var wastedOp = getOperations();
 				var actionsGenerated =@ actionGenerator();
 				if (actionsGenerated !== []) {
 					var j = randInt(0, count(actionsGenerated));
-					action += actionsGenerated[j]();
-					push(mutated_actions, gameTuple);
+					var potentialAction = actionsGenerated[j]();
+					if (getSelf(clonedState) === null) {
+						clonedState =@ previousState;
+						__obstacles =@ previousObstacles;
+					}
+					else {
+						action += potentialAction;
+						push(mutated_actions, gameTuple);
+					}
 					break ;
+				} else {
+					wastedTargettingAttempt += 1;
+					wastedTargettingAttemptOperations += getOperations() - wastedOp;
 				}
 			} while (true);
 			opout_select += getOperations();
@@ -3773,14 +3932,16 @@ function evaluateState(o) {
 	var oaRSH = sumState(os, o[S_ALLIES], RSH);
 	var oaSTR = sumState(os, o[S_ALLIES], STR);
 	var oaAGI = sumState(os, o[S_ALLIES], AGI);
+	var oSelfRESI = os[oID][RES];
+
 	var oneOr = defaultDiv(1);
 	var thousandOr = defaultDiv(1000);
 	var infDiv = defaultDiv(-log(0));
 	var ninfDiv = defaultDiv(log(0));
 	return /*memo1*/(function(@state) {
 		var xs =@ state[S_ALL];
-		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[oID][POS])(xs);
-		xs[oID][HP] -= dmgOnSelf;
+//		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[oID][POS])(xs);
+//		xs[oID][HP] -= dmgOnSelf;
 
 		aIter(compose(removeDead(state))(applyEffects))(xs);
 
@@ -3811,10 +3972,12 @@ function evaluateState(o) {
 		xaminHPR /= 13;
 		xaminHPR += 12 / 13;
 		var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 0.9 * xs[oID][HP] + (-00));
+		var xSelfRESI = xs[oID][RES];
 
 		var xeDist = 1;
 		var xaDist = 1;
 		var spos = xs[oID][POS];
+		var mLaserSurround = 0;
 		if (spos !== null) {
 			var getDist =@ function(@e) {
 				return getPathLength(spos, xs[e][POS]);
@@ -3825,13 +3988,15 @@ function evaluateState(o) {
 				xaDist =@ sum(aMap(getDist)(allies)) / xaAlives;
 				xaDist =@ max(1, (100 + max(0, xaDist - getSelf(state)[TMP])) / 100);
 			}
+			mLaserSurround = count(getMLaserCellsTargetingCell(state, spos));
 		}
+		var distFromCenter = getDistance(spos, 306);
 
-		return (1 + xeDist)
+		return (1 + 5 * xeDist)
 			 * (1 + xaDist)
-			 * (1 + ninfDiv(xeLifes)(oeLifes))
-			 * (1 + ninfDiv(xeAlives)(oeAlives))
-			 * (1 + xeminHPR)
+			 * (1 + 1.5 * ninfDiv(xeLifes)(oeLifes))
+			 * (1 + 1.5 * ninfDiv(xeAlives)(oeAlives))
+			 * (1 + 1.5 * xeminHPR)
 			 * (1 + infDiv(oaLifes)(xaLifes))
 			 * (1 + infDiv(oaAlives)(xaAlives))
 			 * (1 + xaminHPR)
@@ -3843,80 +4008,18 @@ function evaluateState(o) {
 			 * (1 + oneOr(xeTTP)(oeTTP))
 			 * (1 + oneOr(xeTMP)(oeTMP))
 			 * (1 + infDiv(oaTTP)(xaTTP))
-			 * (1 + infDiv(oaTMP)(xaTMP));
+			 * (1 + infDiv(oaTMP)(xaTMP))
+			 * (1 + 0.01 * mLaserSurround)
+			 * (1 + oneOr(oSelfRESI)(xSelfRESI))
+			 //* (1 + dmgOnSelf)
+			 * (1 + 0.0001 * distFromCenter)
+			 ;
 	});
 }
 
-/*
+
 function evaluateState2(@state) {
-		var xs =@ state[S_ALL];
-		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[oID][POS])(xs);
-		xs[oID][HP] -= dmgOnSelf;
-
-		aIter(compose(removeDead(state))(applyEffects))(xs);
-
-		var enemies =@ state[S_ENEMIES];
-		var allies =@ state[S_ALLIES];
-		var xeAlives = count(enemies);
-		var xaAlives = count(allies);
-
-		var xeLifes = 0;
-		var xeTTP = 0;
-		var xeTMP = 0;
-		var xeminHPR = xeAlives < 1 ? 0 : -log(0);
-		getStats(xs, enemies)(xeLifes, xeTTP, xeTMP, 0, 0, 0, 0, xeminHPR);
-		xeminHPR /= 13;
-		xeminHPR += 12 / 13;
-
-		var xaLifes = 0;
-		var xaTTP = 0;
-		var xaTMP = 0;
-		var xaASH = 0;
-		var xaRSH = 0;
-		var xaSTR = 0;
-		var xaAGI = 0;
-		var xaminHPR = xaAlives < 1 ? 0 : -log(0);
-		getStats(xs, allies)
-			(xaLifes, xaTTP, xaTMP, xaASH, xaRSH, xaSTR, xaAGI, xaminHPR);
-		xaminHPR = 1 - xaminHPR;
-		xaminHPR /= 13;
-		xaminHPR += 12 / 13;
-		var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 0.9 * xs[oID][HP] + (-00));
-
-		var xeDist = 1;
-		var xaDist = 1;
-		var spos = xs[oID][POS];
-		if (spos !== null) {
-			var getDist =@ function(@e) {
-				return getPathLength(spos, xs[e][POS]);
-				};
-			xeDist =@ arrayMin(aMap(getDist)(enemies));
-			xeDist =@ max(1, (100 + max(0, xeDist - 7 - getSelf(state)[TMP])) / 100);
-			if (xaAlives > 1) {
-				xaDist =@ sum(aMap(getDist)(allies)) / xaAlives;
-				xaDist =@ max(1, (100 + max(0, xaDist - getSelf(state)[TMP])) / 100);
-			}
-		}
-
-		return 1 * 1
-			 + 1 * xeDist
-			 + 1 * xaDist
-			 + 1 * ninfDiv(xeLifes)(oeLifes)
-			 + 1 * ninfDiv(xeAlives)(oeAlives)
-			 + 1 * xeminHPR
-			 + 1 * infDiv(oaLifes)(xaLifes)
-			 + 1 * infDiv(oaAlives)(xaAlives)
-			 + 1 * xaminHPR
-			 + 1 * xSelfHPR
-			 + 1 * oneOr(oaASH)(xaASH)
-			 + 1 * oneOr(oaRSH)(xaRSH)
-			 + 1 * oneOr(oaSTR)(xaSTR)
-			 + 1 * oneOr(oaAGI)(xaAGI)
-			 + 1 * oneOr(xeTTP)(oeTTP)
-			 + 1 * oneOr(xeTMP)(oeTMP)
-			 + 1 * infDiv(oaTTP)(xaTTP)
-			 + 1 * infDiv(oaTMP)(xaTMP);
-}*/
+}
 
 function main() {
 
@@ -3943,8 +4046,8 @@ function main() {
 	var opin_prio = 0, opout_prio = 0;
 
 	var maxOp = 19000000;
-	var nbAncestors = 10;
-	var nbMutants = 10;
+	var nbAncestors = 5;
+	var nbMutants = 5;
 	var nbNewcomers = 10;
 	var maxPop = nbAncestors + nbMutants + nbNewcomers;
 	while (getOperations() < maxOp && count(population) < maxPop) {
@@ -4005,6 +4108,9 @@ function main() {
 		debugC((opout_evaluate - opin_evaluate) * 100 / OPERATIONS_LIMIT, BEST_COLOR);
 		debugC((opout_prio - opin_prio) * 100 / OPERATIONS_LIMIT, 0);
 		debug("totalPop: " + totalPop);
+		debug("total wasted attempt at targetting something: " + wastedTargettingAttempt);
+		debug("ops: " + wastedTargettingAttemptOperations + "(" + (wastedTargettingAttemptOperations * 100 / OPERATIONS_LIMIT) + "%)");
+		debug("totalOpActionList ops: " + totalOpActionList + "(" + (totalOpActionList * 100 / OPERATIONS_LIMIT) + "%)");
 		debug('');
 
 	var value;
