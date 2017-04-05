@@ -1696,7 +1696,8 @@ global ITEM_MAX_RANGE = arrayMap(ITEMS, function(@item, @_) {return getItemMaxRa
 global ITEM_MIN_RANGE = arrayMap(ITEMS, function(@item, @_) {return getItemMinRange(item);});
 global ITEM_EFFECTIVE_MAX_RANGE = arrayMap(ITEMS, function(@item, @_) { return ITEM_MAX_RANGE[item] + ITEM_AOE_RADIUS[item]; });
 
-global ITEM_COST = arrayMap(ITEMS, function(@item, @_) {return getItemMaxRange(item);});
+global ITEM_COST = arrayMap(ITEMS, function(@item, @_) {return getItemCost(item);});
+global ITEM_INLINE = arrayMap(ITEMS, function(@item, @_) {return isInlineItem(item);});
 
 global ITEM_DMG_TP = [
 WEAPON_AXE : 10.08,
@@ -1816,6 +1817,7 @@ global RES = 1011;
 global ASH = 1012;
 global RSH = 1013;
 global RET = 1014;
+global STAT_TOTAL = 15;
 global POS = 1015;
 global TYPE = 1016;
 global EFFS = 1017;
@@ -2116,8 +2118,8 @@ WEAPON_DESTROYER : function(@state, @caster, @center) {
 	};},
 WEAPON_DOUBLE_GUN : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
-	var dmg = rawEff(21.5, caster[STR]) * crit;
-	var dmg2 = rawEff(6.5, caster[STR]) * crit;
+	var dmg = rawEff(22, caster[STR]) * crit;
+	var dmg2 = rawEff(6, caster[STR]) * crit;
 	var ls = caster[WIS] / 1000;
 	return function(@target) {
 		if (center == target[POS]) {
@@ -2862,9 +2864,52 @@ CHIP_PROTEIN : function(@state, @caster, @center) {
 		}
 	};},
 CHIP_PUNY_BULB : function(@state, @caster, @center) {
+	__obstacles[center] = true;
+	var clevel = caster[LEVEL] - 1;
+	var corder = caster[ORDER];
+	var new_id = state[S_MAX_ID]++;
+	var entity =@	[ THP	: 50 + round(250 * clevel / 300)
+					, HP	: 50 + round(250 * clevel / 300)
+					, TMP	: 3 + round(2 * clevel / 300)
+					, MP	: 3 + round(2 * clevel / 300)
+					, TTP	: 4 + round(3 * clevel / 300)
+					, TP	: 4 + round(3 * clevel / 300)
+					, SCI	: 0 + round(100 * clevel / 300)
+					, STR	: 0 + round(100 * clevel / 300)
+					, MAG	: 0
+					, WIS	: 0 + round(100 * clevel / 300)
+					, AGI	: 0 + round(100 * clevel / 300)
+					, RES	: 0 + round(100 * clevel / 300)
+					, ASH	: 0
+					, RSH	: 0
+					, RET : 0
+					, POS	: center
+					, TYPE: ENTITY_BULB
+					, EFFS: []
+					, CHIPS:	[ CHIP_BANDAGE: 0
+								, CHIP_DRIP: 0
+								, CHIP_CURE: 0
+								, CHIP_VACCINE: 0 ]
+					, EQ	: null
+					, UNEQ: []
+					, ID	: new_id
+					, ORDER	: corder + 1
+					, AREA_POINT	: getApplicableArea(AREA_POINT)(center)
+					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
+					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
+					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
+					, ALLY	: true
+					, ENEMY	: false
+					, SUMMON	: true
+					, SUMMONER: caster[ID]
+					, NAME	: 'puny_bulb'
+					, LEVEL	: clevel
+					];
+	aIter(function(@x) { if (x[ORDER] > corder) { x[ORDER]++; }})(state[S_ALL]);
+	push(state[S_ALLIES], new_id);
+	state[S_ALL][new_id] = entity;
+	insert(state[S_ORDER], new_id, corder);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_PUNY_BULB);
 	};},
 CHIP_RAGE : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
@@ -3315,7 +3360,7 @@ function prepareArea(@isTarget, @area) { return function(@state) {
 };};}
 
 function entityToBeKilled(@state) { return function(@entity) {
-	return entity[ENEMY] && entity[NAME] !== 'puny_bulb';
+	return entity[ENEMY]; // && entity[NAME] !== 'puny_bulb';
 };}
 
 function leekToBeKilled(@state) { return function(@entity) {
@@ -3371,7 +3416,7 @@ function alliedLeekWithEffect(@effect) {return function(@state) { return functio
 };};}
 
 function anyEntity(@state) { return function(@entity) {
-	return entity[NAME] !== 'puny_bulb';
+	return true; //entity[NAME] !== 'puny_bulb';
 };}
 
 function canTargetCellWith(@item) { return function(@state) {
@@ -3688,7 +3733,7 @@ function getMove(@gameState) {
 			self[AREA_CIRCLE_3] = getApplicableArea(AREA_CIRCLE_3)(cell);
 			return [delay(compose(moveTowardCell)(function(x) {
 				//mark(x, COLOR_YELLOW);
-				debug("M -> " + x);
+				//debug("M -> " + x);
 				return x;
 			}))(cell)];
 		};})(moves);
@@ -3736,7 +3781,7 @@ function getAction(@gameState) {
 				else {
 					push(ret, delay(compose(useItemOnCell(item))(function(x){
 							//mark(x, BEST_COLOR);
-							debug(getItemName(item) + " -> " + target);
+							//debug(getItemName(item) + " -> " + target);
 							return x;
 						}))(target));
 				}
@@ -3913,113 +3958,124 @@ function applyEffects(@wearer) {
 	return wearer;
 }
 
-function evaluateState(o) {
-	var oID = getSelf(o)[ID];
-	var os =@ o[S_ALL];
-	aIter(compose(removeDead(o))(applyEffects))(os);
-	var oeAlives = count(o[S_ENEMIES]);
-	var oaAlives = count(o[S_ALLIES]);
+function getDescription(@xs) {
+	var indexRange = 2 * STAT_TOTAL + 2;
+	var description = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					];
+	for (var eID : var e in xs) {
+		var baseIndex = (2 * e[SUMMON] + e[ALLY]) * indexRange;
+		description[baseIndex - THP + THP] += e[THP];
+		description[baseIndex - THP + HP ] += e[HP];
+		description[baseIndex - THP + TMP] += e[TMP];
+		description[baseIndex - THP + MP ] += e[MP];
+		description[baseIndex - THP + TTP] += e[TTP];
+		description[baseIndex - THP + TP ] += e[TP];
+		description[baseIndex - THP + SCI] += e[SCI];
+		description[baseIndex - THP + STR] += e[STR];
+		description[baseIndex - THP + MAG] += e[MAG];
+		description[baseIndex - THP + WIS] += e[WIS];
+		description[baseIndex - THP + AGI] += e[AGI];
+		description[baseIndex - THP + RES] += e[RES];
+		description[baseIndex - THP + ASH] += e[ASH];
+		description[baseIndex - THP + RSH] += e[RSH];
+		description[baseIndex - THP + RET] += e[RET];
+		description[baseIndex - THP + STAT_TOTAL + THP] = max(description[baseIndex - THP + STAT_TOTAL + THP], e[THP]);
+		description[baseIndex - THP + STAT_TOTAL + HP ] = max(description[baseIndex - THP + STAT_TOTAL + HP], e[HP]);
+		description[baseIndex - THP + STAT_TOTAL + TMP] = max(description[baseIndex - THP + STAT_TOTAL + TMP], e[TMP]);
+		description[baseIndex - THP + STAT_TOTAL + MP ] = max(description[baseIndex - THP + STAT_TOTAL + MP], e[MP]);
+		description[baseIndex - THP + STAT_TOTAL + TTP] = max(description[baseIndex - THP + STAT_TOTAL + TTP], e[TTP]);
+		description[baseIndex - THP + STAT_TOTAL + TP ] = max(description[baseIndex - THP + STAT_TOTAL + TP], e[TP]);
+		description[baseIndex - THP + STAT_TOTAL + SCI] = max(description[baseIndex - THP + STAT_TOTAL + SCI], e[SCI]);
+		description[baseIndex - THP + STAT_TOTAL + STR] = max(description[baseIndex - THP + STAT_TOTAL + STR], e[STR]);
+		description[baseIndex - THP + STAT_TOTAL + MAG] = max(description[baseIndex - THP + STAT_TOTAL + MAG], e[MAG]);
+		description[baseIndex - THP + STAT_TOTAL + WIS] = max(description[baseIndex - THP + STAT_TOTAL + WIS], e[WIS]);
+		description[baseIndex - THP + STAT_TOTAL + AGI] = max(description[baseIndex - THP + STAT_TOTAL + AGI], e[AGI]);
+		description[baseIndex - THP + STAT_TOTAL + RES] = max(description[baseIndex - THP + STAT_TOTAL + RES], e[RES]);
+		description[baseIndex - THP + STAT_TOTAL + ASH] = max(description[baseIndex - THP + STAT_TOTAL + ASH], e[ASH]);
+		description[baseIndex - THP + STAT_TOTAL + RSH] = max(description[baseIndex - THP + STAT_TOTAL + RSH], e[RSH]);
+		description[baseIndex - THP + STAT_TOTAL + RET] = max(description[baseIndex - THP + STAT_TOTAL + RET], e[RET]);
+		var hpr = description[baseIndex + STAT_TOTAL + STAT_TOTAL];
+		var ehpr = e[HP] / e[THP];
+		description[baseIndex + STAT_TOTAL + STAT_TOTAL] = hpr !== 0 && hpr < ehpr
+														 ? hpr : ehpr;
+		description[baseIndex + STAT_TOTAL + STAT_TOTAL + 1] += 1;
+	}
 
-	var oeLifes = sumState(os, o[S_ENEMIES], HP);
-	var oeTTP = sumState(os, o[S_ENEMIES], TTP);
-	var oeTMP = sumState(os, o[S_ENEMIES], TMP);
-	var oeMinLife;
+	return description;
+}
 
-	var oaLifes = sumState(os, o[S_ALLIES], HP);
-	var oaTTP = sumState(os, o[S_ALLIES], TTP);
-	var oaTMP = sumState(os, o[S_ALLIES], TMP);
-	var oaASH = sumState(os, o[S_ALLIES], ASH);
-	var oaRSH = sumState(os, o[S_ALLIES], RSH);
-	var oaSTR = sumState(os, o[S_ALLIES], STR);
-	var oaAGI = sumState(os, o[S_ALLIES], AGI);
-	var oSelfRESI = os[oID][RES];
+function evaluateDescription(@description) {
+	//           	THP	HP		TMP	MP	TTP	TP	SCI	STR	MAG	WIS	AGI	RES	ASH		RSH		RET	MTHP	MHP		MTMP	MMP	MTTP	MTP	MSCI	MSTR	MMAG	MWIS	MAGI	MRES	MASH	MRSH	MRET	HPR		nbAlive
+	var coeffs = [	0,	100,	1,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,		0,		0,	0,		0,		0,		0,	0,		0,	0,		0,		0,		0,		0,		0,		0,		0,		0,		1000, 	750,
+					0,	-67,	-1,	0,	-1,	0,	0,	-5,	0,	0,	-5,	-1,	-90,	-10,	0,	0,		0,		0,		0,	0,		0,	0,		0,		0,		0,		0,		0,		0,		0,		0,		-150,	-750,
+					0,	0,		0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,		0,		0,	0,		0,		0,		0,	0,		0,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0, 		375,
+					0,	0,		0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,		0,		0,	0,		0,		0,		0,	0,		0,	0,		0,		0,		0,		0,		0,		0,		0,		0,		0, 		-375,
+	//				expDistFromCenter	safeCell	dmgOnSelf	mLaserSurround	xSelfRESI	xSelfHPR	xeDist	xaDist	bias
+					0.5,				-300,		1,			50,				-1,			-400,		2,		1.5,	1
+				];
+	var len = count(description);
+	var evaluation = 0;
+	for (var i = 0; i < len; i++) {
+		evaluation += description[i] * coeffs[i];
+	}
+	return evaluation;
+}
 
-	var oneOr = defaultDiv(1);
-	var thousandOr = defaultDiv(1000);
-	var infDiv = defaultDiv(-log(0));
-	var ninfDiv = defaultDiv(log(0));
-	return /*memo1*/(function(@state) {
+function evaluateState(@state, @description) {
+		var sID = getLeek();
 		var xs =@ state[S_ALL];
-//		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[oID][POS])(xs);
-//		xs[oID][HP] -= dmgOnSelf;
 
 		aIter(compose(removeDead(state))(applyEffects))(xs);
 
+		if (xs[sID] === null) { return -log(0); }
+		var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[sID][POS])(xs);
 		var enemies =@ state[S_ENEMIES];
 		var allies =@ state[S_ALLIES];
-		var xeAlives = count(enemies);
-		var xaAlives = count(allies);
 
-		var xeLifes = 0;
-		var xeTTP = 0;
-		var xeTMP = 0;
-		var xeminHPR = xeAlives < 1 ? 0 : -log(0);
-		getStats(xs, enemies)(xeLifes, xeTTP, xeTMP, 0, 0, 0, 0, xeminHPR);
-		xeminHPR /= 13;
-		xeminHPR += 12 / 13;
-
-		var xaLifes = 0;
-		var xaTTP = 0;
-		var xaTMP = 0;
-		var xaASH = 0;
-		var xaRSH = 0;
-		var xaSTR = 0;
-		var xaAGI = 0;
-		var xaminHPR = xaAlives < 1 ? 0 : -log(0);
-		getStats(xs, allies)
-			(xaLifes, xaTTP, xaTMP, xaASH, xaRSH, xaSTR, xaAGI, xaminHPR);
-		xaminHPR = 1 - xaminHPR;
-		xaminHPR /= 13;
-		xaminHPR += 12 / 13;
-		var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 0.9 * xs[oID][HP] + (-00));
-		var xSelfRESI = xs[oID][RES];
-
-		var xeDist = 1;
-		var xaDist = 1;
-		var spos = xs[oID][POS];
+		var xeDist = 0;
+		var xaDist = 0;
+		var spos = xs[sID][POS];
 		var mLaserSurround = 0;
-		if (spos !== null) {
-			var getDist =@ function(@e) {
+		var getDist =@ function(@e) {
 				return getPathLength(spos, xs[e][POS]);
-				};
-			xeDist =@ arrayMin(aMap(getDist)(enemies));
-			xeDist =@ max(1, (100 + max(0, xeDist - 7 - getSelf(state)[TMP])) / 100);
-			if (xaAlives > 1) {
-				xaDist =@ sum(aMap(getDist)(allies)) / xaAlives;
-				xaDist =@ max(1, (100 + max(0, xaDist - getSelf(state)[TMP])) / 100);
-			}
-			mLaserSurround = count(getMLaserCellsTargetingCell(state, spos));
-		}
-		var distFromCenter = getDistance(spos, 306);
+		};
+		xeDist =@ arrayMin(aMap(getDist)(enemies));
+		xaDist =@ average(aMap(getDist)(allies));
+		mLaserSurround = count(getMLaserCellsTargetingCell(state, spos));
 
-		return (1 + 5 * xeDist)
-			 * (1 + xaDist)
-			 * (1 + 1.5 * ninfDiv(xeLifes)(oeLifes))
-			 * (1 + 1.5 * ninfDiv(xeAlives)(oeAlives))
-			 * (1 + 1.5 * xeminHPR)
-			 * (1 + infDiv(oaLifes)(xaLifes))
-			 * (1 + infDiv(oaAlives)(xaAlives))
-			 * (1 + xaminHPR)
-			 * (1 + xSelfHPR)
-			 * (1 + oneOr(oaASH)(xaASH))
-			 * (1 + oneOr(oaRSH)(xaRSH))
-			 * (1 + oneOr(oaSTR)(xaSTR))
-			 * (1 + 0.5 * oneOr(oaAGI)(xaAGI))
-			 * (1 + oneOr(xeTTP)(oeTTP))
-			 * (1 + oneOr(xeTMP)(oeTMP))
-			 * (1 + infDiv(oaTTP)(xaTTP))
-			 * (1 + infDiv(oaTMP)(xaTMP))
-			 * (1 + 0.01 * mLaserSurround)
-			 * (1 + oneOr(oSelfRESI)(xSelfRESI))
-			 //* (1 + dmgOnSelf)
-			 * (1 + 0.0001 * distFromCenter)
-			 ;
-	});
+		var xSelfHPR = xs[sID][HP] / xs[sID][THP];
+		var xSelfRESI = xs[sID][RES];
+
+		var enemy = getNearestEnemyLeekFromState(state);
+		var safeCell = checkCellSafety(spos, xs[enemy]) ? 1 : 0;
+		mark(spos, safeCell ? COLOR_GREEN : COLOR_RED);
+
+		var distFromCenter = getDistance(spos, 306);
+		var expDistFromCenter = exp(distFromCenter - 13);
+		description =@ getDescription(xs);
+		push(description, expDistFromCenter);
+		push(description, safeCell);
+		push(description, dmgOnSelf);
+		push(description, mLaserSurround);
+		push(description, xSelfRESI);
+		push(description, xSelfHPR);
+		push(description, xeDist);
+		push(description, xaDist);
+		push(description, 1);
+
+		var evaluation = evaluateDescription(description);
+
+		return evaluation;
 }
 
 
 function evaluateState2(@state) {
 }
+
+global ALL_IDS = getAllies() + getEnemies();
 
 function main() {
 
@@ -4027,9 +4083,8 @@ function main() {
 	var baseObstacles = __obstacles;
 	var gameState = generateGameState();
 
-	debug(getOperations() + 'op');
+	//debug(getOperations() + 'op');
 
-	var evaluate = evaluateState(gameState);
 	var population = pqEmpty();
 	var popInsert = pqInsert(population);
 	var popSelect = pqPop(population);
@@ -4045,6 +4100,11 @@ function main() {
 	var opin_evaluate = 0, opout_evaluate = 0;
 	var opin_prio = 0, opout_prio = 0;
 
+	var description;
+	var best_description = null;
+	var best_score = -log(0);
+	var second_best_score = null;
+
 	var maxOp = 19000000;
 	var nbAncestors = 5;
 	var nbMutants = 5;
@@ -4057,7 +4117,8 @@ function main() {
 		opout_mutate += getOperations();
 		if (actions === []) { continue; }
 		opin_evaluate += getOperations();
-		var value = evaluate(getLastState(actions));
+		var value = evaluateState(getLastState(actions), description);
+		if (value < best_score) { second_best_score = best_score; best_score = value; best_description =@ description; }
 		opout_evaluate += getOperations();
 		totalPop++;
 		opin_prio += getOperations();
@@ -4070,16 +4131,16 @@ function main() {
 		var i = 0;
 		var ancestors = [];
 		ancestors += population;
-		var cyclicAncestors = cyclicLookup(ancestors);
 		while (getOperations() < maxOp && i < nbMutants) {
 			__obstacles = baseObstacles;
 			opin_mutate += getOperations();
-			var actions =@ mutateActions(cyclicAncestors(i)(null), gameState);
+			var actions =@ mutateActions(ancestors[randInt(0, nbAncestors)](null), gameState);
 			opout_mutate += getOperations();
 			i++;
 			if (actions === []) { continue; }
 			opin_evaluate += getOperations();
-			var value = evaluate(getLastState(actions));
+			var value = evaluateState(getLastState(actions), description);
+			if (value < best_score) { second_best_score = best_score; best_score = value; best_description =@ description; }
 			opout_evaluate += getOperations();
 			totalPop++;
 			opin_prio += getOperations();
@@ -4093,7 +4154,8 @@ function main() {
 			opout_mutate += getOperations();
 			if (actions === []) { continue; }
 			opin_evaluate += getOperations();
-			var value = evaluate(getLastState(actions));
+			var value = evaluateState(getLastState(actions), description);
+			if (value < best_score) { second_best_score = best_score; best_score = value; best_description =@ description; }
 			opout_evaluate += getOperations();
 			totalPop++;
 			opin_prio += getOperations();
@@ -4101,23 +4163,27 @@ function main() {
 			opout_prio += getOperations();
 		}
 	}
-		debugC((opout_move - opin_move) * 100 / OPERATIONS_LIMIT, COLOR_GREEN);
-		debugC((opout_attack - opin_attack) * 100 / OPERATIONS_LIMIT, COLOR_RED);
-		debugC((opout_select - opin_select) * 100 / OPERATIONS_LIMIT, COLOR_BLUE);
-		debugC((opout_mutate - opin_mutate) * 100 / OPERATIONS_LIMIT, 0);
-		debugC((opout_evaluate - opin_evaluate) * 100 / OPERATIONS_LIMIT, BEST_COLOR);
-		debugC((opout_prio - opin_prio) * 100 / OPERATIONS_LIMIT, 0);
-		debug("totalPop: " + totalPop);
-		debug("total wasted attempt at targetting something: " + wastedTargettingAttempt);
-		debug("ops: " + wastedTargettingAttemptOperations + "(" + (wastedTargettingAttemptOperations * 100 / OPERATIONS_LIMIT) + "%)");
-		debug("totalOpActionList ops: " + totalOpActionList + "(" + (totalOpActionList * 100 / OPERATIONS_LIMIT) + "%)");
-		debug('');
+//		debugC((opout_move - opin_move) * 100 / OPERATIONS_LIMIT, COLOR_GREEN);
+//		debugC((opout_attack - opin_attack) * 100 / OPERATIONS_LIMIT, COLOR_RED);
+//		debugC((opout_select - opin_select) * 100 / OPERATIONS_LIMIT, COLOR_BLUE);
+//		debugC((opout_mutate - opin_mutate) * 100 / OPERATIONS_LIMIT, 0);
+//		debugC((opout_evaluate - opin_evaluate) * 100 / OPERATIONS_LIMIT, BEST_COLOR);
+	//	debugC((opout_prio - opin_prio) * 100 / OPERATIONS_LIMIT, 0);
+		//debug("totalPop: " + totalPop);
+//		debug("total wasted attempt at targetting something: " + wastedTargettingAttempt);
+//		debug("ops: " + wastedTargettingAttemptOperations + "(" + (wastedTargettingAttemptOperations * 100 / OPERATIONS_LIMIT) + "%)");
+//		debug("totalOpActionList ops: " + totalOpActionList + "(" + (totalOpActionList * 100 / OPERATIONS_LIMIT) + "%)");
+//		debug('');
 
 	var value;
 	var elected =@ population[0](value);
 
-	debug('value = ' + value);
-	debugC('action count: ' + count(elected[0]), BEST_COLOR);
+	//debug('value = ' + value);
+	debug(getLeek());
+	debug(best_score);
+	debug(second_best_score);
+	debug(best_description);
+//	debugC('action count: ' + count(elected[0]), BEST_COLOR);
 	//debugC(elected, COLOR_BLUE);
 	ACTIONS_QUEUE =@ elected;
 	aIter(act)(shift(ACTIONS_QUEUE));
@@ -4132,7 +4198,7 @@ function main() {
 	}
 }
 
-debug(getOperations() + 'op');
+//debug(getOperations() + 'op');
 
 
 /////////////////////////////////////////////////////////////////////
@@ -4148,3 +4214,65 @@ global COLOR_YELLOW = getColor(255, 255, 0);
 global COLOR_WHITE = getColor(255, 255, 255);
 global COLOR_CYAN = getColor(0, 255, 255);
 global BEST_COLOR = getColor(252, 15, 192);
+
+/////////////////////////////////////////////////////////////////////
+
+function getNearestEnemyLeekFromState(@state) {
+	var s = state[S_ALL][getLeek()];
+	var leek, dist;
+	for (var l in state[S_ALL]) {
+		if (l[ENEMY] && l[TYPE] == ENTITY_LEEK) {
+			if (leek === null) {
+				leek = l[ID];
+				dist = getCellDistance(s[POS], l[POS]);
+			}
+			else {
+				var nd = getCellDistance(s[POS], l[POS]);
+				if (nd < dist) {
+					leek = l[ID];
+					dist = nd;
+				}
+			}
+		}
+	}
+	return leek;
+}
+
+function checkCellSafety(cell, @entity) {
+	var maxRadiusRange = 0;
+	var maxInlineRange = 0;
+
+	for (var chip : var cooldown in entity[CHIPS]) {
+		if (chip === CHIP_SPARK || cooldown > 1) { continue; }
+		if (cAttaques[chip] || cPoisons[chip]) {
+			var range = ITEM_MAX_RANGE[chip];
+			if (ITEM_INLINE[chip]) {
+				maxInlineRange = maxInlineRange < range ? range : maxInlineRange;
+			}
+			else {
+				maxRadiusRange = maxRadiusRange < range ? range : maxRadiusRange;
+			}
+		}
+	}
+
+	for (var weapon in entity[CHIPS]) {
+		var range = ITEM_MAX_RANGE[weapon];
+		if (ITEM_INLINE[weapon]) {
+			maxInlineRange = maxInlineRange < range ? range : maxInlineRange;
+		}
+		else {
+			maxRadiusRange = maxRadiusRange < range ? range : maxRadiusRange;
+		}
+	}
+
+	var alignedOnCell = aligned(cell);
+	var enemyCDs = getlAccessibleCells(entity[MP])(entity[POS]);
+	for (var enemyCell : var __ in enemyCDs) {
+		if (lineOfSight(enemyCell, cell, ALL_IDS)) {
+			var dist = getCellDistance(enemyCell, cell);
+			if (dist <= maxRadiusRange) { return false; }
+			if (dist <= maxInlineRange && alignedOnCell(enemyCell)) { return false; }
+		}
+	}
+	return true;
+}
