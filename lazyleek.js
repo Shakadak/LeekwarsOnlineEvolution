@@ -2918,9 +2918,52 @@ CHIP_FERTILIZER : function(@state, @caster, @center) {
 		}
 	};},
 CHIP_FIRE_BULB : function(@state, @caster, @center) {
+	__obstacles[center] = true;
+	var clevel = caster[LEVEL] - 1;
+	var corder = caster[ORDER];
+	var new_id = state[S_MAX_ID]++;
+	var entity =@	[ THP	: 300 + round(300 * clevel / 300)
+					, HP	: 300 + round(300 * clevel / 300)
+					, TMP	: 3 + round(2 * clevel / 300)
+					, MP	: 3 + round(2 * clevel / 300)
+					, TTP	: 5 + round(5 * clevel / 300)
+					, TP	: 5 + round(5 * clevel / 300)
+					, SCI	: 0 + round(000 * clevel / 300)
+					, STR	: 0 + round(300 * clevel / 300)
+					, MAG	: 0
+					, WIS	: 0 + round(200 * clevel / 300)
+					, AGI	: 0 + round(100 * clevel / 300)
+					, RES	: 0 + round(000 * clevel / 300)
+					, ASH	: 0
+					, RSH	: 0
+					, RET : 0
+					, POS	: center
+					, TYPE: ENTITY_BULB
+					, EFFS: []
+					, CHIPS:	[ CHIP_SPARK: 0
+								, CHIP_FLAME: 0
+								, CHIP_METEORITE: 0
+								, CHIP_DOPING: 0 ]
+					, EQ	: null
+					, WEAPONS: []
+					, ID	: new_id
+					, ORDER	: corder + 1
+					, AREA_POINT	: getApplicableArea(AREA_POINT)(center)
+					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
+					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
+					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
+					, ALLY	: true
+					, ENEMY	: false
+					, SUMMON	: true
+					, SUMMONER: caster[ID]
+					, NAME	: 'fire_bulb'
+					, LEVEL	: clevel
+					];
+	aIter(function(@x) { if (x[ORDER] > corder) { x[ORDER]++; }})(state[S_ALL]);
+	push(state[S_ALLIES], new_id);
+	state[S_ALL][new_id] = entity;
+	insert(state[S_ORDER], new_id, corder);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_FIRE_BULB);
 	};},
 CHIP_FLAME : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
@@ -3055,9 +3098,52 @@ CHIP_ICEBERG : function(@state, @caster, @center) {
 		}
 	};},
 CHIP_ICED_BULB : function(@state, @caster, @center) {
+	__obstacles[center] = true;
+	var clevel = caster[LEVEL] - 1;
+	var corder = caster[ORDER];
+	var new_id = state[S_MAX_ID]++;
+	var entity =@	[ THP	: 300 + round(400 * clevel / 300)
+					, HP	: 300 + round(400 * clevel / 300)
+					, TMP	: 3 + round(1 * clevel / 300)
+					, MP	: 3 + round(1 * clevel / 300)
+					, TTP	: 5 + round(3 * clevel / 300)
+					, TP	: 5 + round(3 * clevel / 300)
+					, SCI	: 0 + round(100 * clevel / 300)
+					, STR	: 0 + round(300 * clevel / 300)
+					, MAG	: 0
+					, WIS	: 0
+					, AGI	: 0 + round(100 * clevel / 300)
+					, RES	: 0 + round(000 * clevel / 300)
+					, ASH	: 0
+					, RSH	: 0
+					, RET : 0
+					, POS	: center
+					, TYPE: ENTITY_BULB
+					, EFFS: []
+					, CHIPS:	[ CHIP_ICE: 0
+								, CHIP_STALACTITE: 0
+								, CHIP_ICEBERG: 0
+								, CHIP_REFLEXES: 0 ]
+					, EQ	: null
+					, WEAPONS: []
+					, ID	: new_id
+					, ORDER	: corder + 1
+					, AREA_POINT	: getApplicableArea(AREA_POINT)(center)
+					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
+					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
+					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
+					, ALLY	: true
+					, ENEMY	: false
+					, SUMMON	: true
+					, SUMMONER: caster[ID]
+					, NAME	: 'iced_bulb'
+					, LEVEL	: clevel
+					];
+	aIter(function(@x) { if (x[ORDER] > corder) { x[ORDER]++; }})(state[S_ALL]);
+	push(state[S_ALLIES], new_id);
+	state[S_ALL][new_id] = entity;
+	insert(state[S_ORDER], new_id, corder);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_ICED_BULB);
 	};},
 CHIP_INVERSION : function(@state, @caster, @center) {
 	return function(@target) {
@@ -3794,8 +3880,8 @@ function bulbeToBeHealed(@state) { return function(@entity) {
 
 function entityToBeLiberated(@state) { return function(@entity) {
 	return entity[NAME] !== 'puny_bulb' && (inArray(state[S_ALLIES], entity[ID]) ?
-	  aAny(function(@y){return negativeEffects[y[0]];})(entity[EFFS])
-	: aAny(function(@y){return positiveEffects[y[0]];})(entity[EFFS]));
+	  aAny(function(@y){return negativeEffects[y[0]] && y[1] != 0;})(entity[EFFS])
+	: aAny(function(@y){return positiveEffects[y[0]] && y[1] != 0;})(entity[EFFS]));
 };}
 
 function leekToBeSaved(@state) {
@@ -4056,31 +4142,86 @@ function averageDmgFromLeeksOnCell(@p) { return function(@cell) { return functio
 };};}
 
 /**
-* getMLaserCellsTargetingCell : (State, Cell) -> [Cell]
+* getMLaserCellsTargetingCell : Cell -> [Cell]
 */
-function getMLaserCellsTargetingCell(@state, @cell) {
+function getMLaserCellsTargetingCell(@cell) {
 	var x = getCellX(cell);
 	var y = getCellY(cell);
 
-	var topleft = getCellFromXY(x - 4, y);
-	var topright = getCellFromXY(x, y - 4);
-	var bottomleft = getCellFromXY(x, y + 4);
-	var bottomright = getCellFromXY(x + 4, y);
+	var tcs = [];
+	for (var d = 1; d <= 12; d++) {
+		var c = getCellFromXY(x - d, y);
+		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
+		if (d >= 4) { push(tcs, c); }
+	}
+	for (var d = 1; d <= 12; d++) {
+		var c = getCellFromXY(x, y - d);
+		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
+		if (d >= 4) { push(tcs, c); }
+	}
+	for (var d = 1; d <= 12; d++) {
+		var c = getCellFromXY(x, y + d);
+		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
+		if (d >= 4) { push(tcs, c); }
+	}
+	for (var d = 1; d <= 12; d++) {
+		var c = getCellFromXY(x + d, y);
+		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
+		if (d >= 4) { push(tcs, c); }
+	}
+
+	return tcs;
+}
+
+/**
+* getElectrisorCellsTargetingCell : (Cell, [ID]) -> [Cell]
+*/
+function getElectrisorCellsTargetingCell(@cell, @ids) {
+	var x = getCellX(cell);
+	var y = getCellY(cell);
+
+	var ret = [];
+
+	for (var i = -7; i <= 7; i++) {
+		for (var j = -7; j <= 7 ; j++) {
+			if (abs(i) + abs(j) === 7) {
+				var trigger = getCellFromXY(x + i, y + j);
+				if (trigger !== null && lineOfSight(cell, trigger, ids)) {
+					push(ret, trigger);
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+/**
+* getKatanaCellsTargetingCell : (State, Cell) -> [Cell]
+*/
+function getKatanaCellsTargetingCell(@cell) {
+	var x = getCellX(cell);
+	var y = getCellY(cell);
+
+	var topleft = getCellFromXY(x - 1, y);
+	var topright = getCellFromXY(x, y - 1);
+	var bottomleft = getCellFromXY(x, y + 1);
+	var bottomright = getCellFromXY(x + 1, y);
 
 	var ret = [];
 	var ids =@ getAliveAllies();
 	ids += getAliveEnemies();
-	if (topleft !== null && lineOfSight(cell, topleft, ids)) {
+	if (topleft !== null && getCellContent(topleft) == CELL_OBSTACLE) {
 		push(ret, topleft);
 	}
-	if (topright !== null && lineOfSight(cell, topright, ids)) {
-		push(ret, topleft);
+	if (topright !== null &&  getCellContent(topright) == CELL_OBSTACLE) {
+		push(ret, topright);
 	}
-	if (bottomleft !== null && lineOfSight(cell, bottomleft, ids)) {
-		push(ret, topleft);
+	if (bottomleft !== null && getCellContent(bottomleft) == CELL_OBSTACLE) {
+		push(ret, bottomleft);
 	}
-	if (bottomright !== null && lineOfSight(cell, bottomright, ids)) {
-		push(ret, topleft);
+	if (bottomright !== null && getCellContent(bottomright) == CELL_OBSTACLE) {
+		push(ret, bottomright);
 	}
 	return ret;
 }
@@ -4106,12 +4247,10 @@ global ACTIONS_QUEUE = [];
 ACTIONS_QUEUE = [];
 //global ACTION = 0, STATE = 1, GENERATOR = 2;
 
-main();
 
 function act(@x) { var a; x(a, 0, 0); aIter(yield)(a); }
 
 function getTargets(@state, @item) {
-	var area = getItemArea(item);
 	var validCells = [];
 	var _getTargets =@ ITEMS_TARGETS[item];
 	if (typeOf(_getTargets) === TYPE_FUNCTION) {
@@ -4176,7 +4315,8 @@ function getAction(@gameState) {
 				if (cBulbes[item]) {
 					push(ret, function() {
 							summon(item, target, function() {
-									aIter(act)(shift(ACTIONS_QUEUE));
+									if (ACTIONS_QUEUE == []) { sayShit(); }
+									else { aIter(act)(shift(ACTIONS_QUEUE)); }
 								});
 							//debug(getNextPlayer());
 							//mark(getCell(getNextPlayer()), COLOR_RED);
@@ -4216,7 +4356,8 @@ function mutateActions(@actions, @baseState, @baseObstacles) {
 	prepActions(actions, baseState, baseObstacles, actions_queue, clonedState, __obstacles);
 
 	if (getSelf(clonedState) === null) {
-		debugW("[mutateActions] We died, this state shouldn't have been kept."); return [];
+		//debugW("[mutateActions] We died, this state shouldn't have been kept.");
+		return [];
 	} // We died, no point continuing.
 
 	while (true) {
@@ -4242,8 +4383,18 @@ function mutateActions(@actions, @baseState, @baseObstacles) {
 				var i = randInt(0, count(curratedList) + 1);
 				var actionGenerator =@ curratedList[i];
 				if (actionGenerator === null) {
-					if (getSelf(clonedState)[EQ] !== WEAPON_M_LASER) {
-						push(action, delay(setWeapon)(WEAPON_M_LASER));
+					var s = getSelf(clonedState);
+					var eq = s[EQ];
+					if (!(eq === WEAPON_M_LASER || eq === WEAPON_GAZOR || eq === WEAPON_FLAME_THROWER)) {
+						if (inArray(s[WEAPONS], WEAPON_FLAME_THROWER)) {
+							push(action, delay(setWeapon)(WEAPON_FLAME_THROWER));
+						}
+						else if (inArray(s[WEAPONS], WEAPON_GAZOR)) {
+							push(action, delay(setWeapon)(WEAPON_GAZOR));
+						}
+						else if (inArray(s[WEAPONS], WEAPON_M_LASER)) {
+							push(action, delay(setWeapon)(WEAPON_M_LASER));
+						}
 					}
 					push(action, sayShit);
 					push(mutated_actions, gameTuple);
@@ -4342,16 +4493,152 @@ function applyEffects(@wearer) {
 	return wearer;
 }
 
-function getDescription(@state) {
+function compareOrderTo(baseto, size) {
+    return function(@l, @r) {
+        var lto = l[ORDER];
+        lto = lto < baseto ? lto + size : lto;
+        var rto = r[ORDER];
+        rto = rto < baseto ? rto + size : rto;
+        return lto <= rto ? lto < rto ? -1 : 0 : 1;
+    };
+}
+
+// function getDescription(@state) {
+// 	var sID = getLeek();
+// 	var xs =@ state[S_ALL];
+// 	var sCell = xs[sID][POS];
+//
+// 	var orderedXS = arraySort(xs, compareOrderTo(xs[sID], count(xs)));
+//
+// 	var indexRange = 7;
+// 	var description =@ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+// 	var i = 0;
+// 	for (var e in orderedXS) {
+// 		if (i >= 24) { break; }
+// 		var baseIndex = i * indexRange;
+// 		i++;
+// 		description[baseIndex + 0 ] = e[HP];
+// 		for (var effect in e[EFFS]) {
+// 			if (effect[0] == EFFECT_HEAL) {
+// 				description[baseIndex + 1 ] += effect[1];
+// 			}
+// 			else if (effect[0] == EFFECT_POISON) {
+// 				description[baseIndex + 1 ] -= effect[1];
+// 			}
+// 		}
+// 		description[baseIndex + 2 ] = (1 + e[STR] / 100) * (1 + 0.4 * e[AGI] / 1000);
+// 		description[baseIndex + 3 ] = (1 + e[MAG] / 100) * (1 + 0.4 * e[AGI] / 1000);
+// 		description[baseIndex + 4 ] = e[POS];
+// 		description[baseIndex + 5 ] = e[ENEMY] ? 1 : 0;
+// 		description[baseIndex + 6 ] = e[ENEMY] ? checkCellSafety(sCell, e) ? 1 : 0 : 1;
+// 	}
+// 	return description;
+// }
+//
+// function evaluateDescription(@description) {
+// 	return feedforward(WEIGHTS["bs"], WEIGHTS["bs"], [description]);
+// }
+
+// function evaluateState(@state) {
+// 	var oID = getLeek();
+// 	var xs =@ state[S_ALL];
+// 	var dmgOnSelf = averageDmgFromLeeksOnCell(access(ENEMY))(xs[oID][POS])(xs);
+// 	//		xs[oID][HP] -= dmgOnSelf;
+//
+// 	aIter(compose(removeDead(state))(applyEffects))(xs);
+//
+// 	var enemies =@ state[S_ENEMIES];
+// 	var allies =@ state[S_ALLIES];
+// 	var xeAlives = count(enemies);
+// 	var xaAlives = count(allies);
+//
+// 	var xeLifes = 0;
+// 	var xeTTP = 0;
+// 	var xeTMP = 0;
+// 	var xeminHPR = xeAlives < 1 ? 0 : -log(0);
+// 	getStats(xs, enemies)(xeLifes, xeTTP, xeTMP, 0, 0, 0, 0, xeminHPR);
+// 	xeminHPR /= 13;
+// 	xeminHPR += 12 / 13;
+//
+// 	var xaLifes = 0;
+// 	var xaTTP = 0;
+// 	var xaTMP = 0;
+// 	var xaASH = 0;
+// 	var xaRSH = 0;
+// 	var xaSTR = 0;
+// 	var xaAGI = 0;
+// 	var xaminHPR = xaAlives < 1 ? 0 : -log(0);
+// 	getStats(xs, allies)
+// 	(xaLifes, xaTTP, xaTMP, xaASH, xaRSH, xaSTR, xaAGI, xaminHPR);
+// 	xaminHPR = 1 - xaminHPR;
+// 	xaminHPR /= 13;
+// 	xaminHPR += 12 / 13;
+// 	var xSelfHPR = xs[oID] === null ? -log(0) : xs[oID][THP] / min(xs[oID][THP], 0.9 * xs[oID][HP] + (-00));
+// 	var xSelfRESI = xs[oID][RES];
+//
+// 	var xeDist = 1;
+// 	var xaDist = 1;
+// 	var spos = xs[oID][POS];
+// 	var mLaserSurround = 0;
+// 	if (spos !== null) {
+// 		var getDist =@ function(@e) {
+// 			return getPathLength(spos, xs[e][POS]);
+// 		};
+// 		xeDist =@ arrayMin(aMap(getDist)(enemies));
+// 		xeDist =@ max(1, (100 + max(0, xeDist - 7 - getSelf(state)[TMP])) / 100);
+// 		if (xaAlives > 1) {
+// 			xaDist =@ sum(aMap(getDist)(allies)) / xaAlives;
+// 			xaDist =@ max(1, (100 + max(0, xaDist - getSelf(state)[TMP])) / 100);
+// 		}
+// 		mLaserSurround = count(getMLaserCellsTargetingCell(state, spos));
+// 	}
+// 	var distFromCenter = getDistance(spos, 306);
+//
+// 	return 5 * xeDist
+// 	+ xaDist
+// 	+ - 1.5 * xeLifes
+// 	+ - 1.5 * xeAlives
+// 	+ - 1.5 * xeminHPR
+// 	+ xaLifes
+// 	+ xaAlives
+// 	+ xaminHPR
+// 	+ -1 * xSelfHPR
+// 	+ xaASH
+// 	+ xaRSH
+// 	+ xaSTR
+// 	+ 0.5 * xaAGI
+// 	+ - xeTTP
+// 	+ - xeTMP
+// 	+ xaTTP
+// 	+ xaTMP
+// 	+ - mLaserSurround
+// 	+ xSelfRESI
+// 	+ - dmgOnSelf
+// 	+ 0.0001 * distFromCenter
+// 	;
+// }
+
+function getDescription2(@state) {
 	var sID = getLeek();
 	var xs =@ state[S_ALL];
 
 	aIter(compose(removeDead(state))(applyEffects))(xs);
 
-	var indexRange = 36;
-	var description =@ [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	var indexRange = 39;
+	var description =@ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 	for (var eID : var e in xs) {
 		var baseIndex = (2 * e[SUMMON] + e[ALLY]) * indexRange;
+
+		var delayedDamage = 0;
+		for (var effect in e[EFFS]) {
+			if (effect[0] == EFFECT_HEAL) {
+				delayedDamage -= effect[1];
+			}
+			else if (effect[0] == EFFECT_POISON) {
+				delayedDamage += effect[1];
+			}
+		}
+
 		description[baseIndex + 0 ] += e[HP];
 		description[baseIndex + 1 ] += e[TMP];
 		description[baseIndex + 2 ] += e[TTP];
@@ -4363,34 +4650,39 @@ function getDescription(@state) {
 		description[baseIndex + 8 ] += e[ASH];
 		description[baseIndex + 9 ] += e[RSH];
 		description[baseIndex + 10] += e[RET];
-		description[baseIndex + 11] = min(description[baseIndex + 11], e[HP]);
-		description[baseIndex + 12] = min(description[baseIndex + 12], e[TMP]);
-		description[baseIndex + 13] = min(description[baseIndex + 13], e[TTP]);
-		description[baseIndex + 14] = min(description[baseIndex + 14], e[STR]);
-		description[baseIndex + 15] = min(description[baseIndex + 15], e[MAG]);
-		description[baseIndex + 16] = min(description[baseIndex + 16], e[WIS]);
-		description[baseIndex + 17] = min(description[baseIndex + 17], e[AGI]);
-		description[baseIndex + 18] = min(description[baseIndex + 18], e[RES]);
-		description[baseIndex + 19] = min(description[baseIndex + 19], e[ASH]);
-		description[baseIndex + 20] = min(description[baseIndex + 20], e[RSH]);
-		description[baseIndex + 21] = min(description[baseIndex + 21], e[RET]);
-		description[baseIndex + 22] = max(description[baseIndex + 22], e[HP]);
-		description[baseIndex + 23] = max(description[baseIndex + 23], e[TMP]);
-		description[baseIndex + 24] = max(description[baseIndex + 24], e[TTP]);
-		description[baseIndex + 25] = max(description[baseIndex + 25], e[STR]);
-		description[baseIndex + 26] = max(description[baseIndex + 26], e[MAG]);
-		description[baseIndex + 27] = max(description[baseIndex + 27], e[WIS]);
-		description[baseIndex + 28] = max(description[baseIndex + 28], e[AGI]);
-		description[baseIndex + 29] = max(description[baseIndex + 29], e[RES]);
-		description[baseIndex + 30] = max(description[baseIndex + 30], e[ASH]);
-		description[baseIndex + 31] = max(description[baseIndex + 31], e[RSH]);
-		description[baseIndex + 32] = max(description[baseIndex + 32], e[RET]);
-		var hpr = description[baseIndex + 33];
+		description[baseIndex + 11] += delayedDamage;
+
+		description[baseIndex + 12] = min(description[baseIndex + 12], e[HP]);
+		description[baseIndex + 13] = min(description[baseIndex + 13], e[TMP]);
+		description[baseIndex + 14] = min(description[baseIndex + 14], e[TTP]);
+		description[baseIndex + 15] = min(description[baseIndex + 15], e[STR]);
+		description[baseIndex + 16] = min(description[baseIndex + 16], e[MAG]);
+		description[baseIndex + 17] = min(description[baseIndex + 17], e[WIS]);
+		description[baseIndex + 18] = min(description[baseIndex + 18], e[AGI]);
+		description[baseIndex + 19] = min(description[baseIndex + 19], e[RES]);
+		description[baseIndex + 20] = min(description[baseIndex + 20], e[ASH]);
+		description[baseIndex + 21] = min(description[baseIndex + 21], e[RSH]);
+		description[baseIndex + 22] = min(description[baseIndex + 22], e[RET]);
+		description[baseIndex + 23] = min(description[baseIndex + 23], delayedDamage);
+
+		description[baseIndex + 24] = max(description[baseIndex + 24], e[HP]);
+		description[baseIndex + 25] = max(description[baseIndex + 25], e[TMP]);
+		description[baseIndex + 26] = max(description[baseIndex + 26], e[TTP]);
+		description[baseIndex + 27] = max(description[baseIndex + 27], e[STR]);
+		description[baseIndex + 28] = max(description[baseIndex + 28], e[MAG]);
+		description[baseIndex + 29] = max(description[baseIndex + 29], e[WIS]);
+		description[baseIndex + 30] = max(description[baseIndex + 30], e[AGI]);
+		description[baseIndex + 31] = max(description[baseIndex + 31], e[RES]);
+		description[baseIndex + 32] = max(description[baseIndex + 32], e[ASH]);
+		description[baseIndex + 33] = max(description[baseIndex + 33], e[RSH]);
+		description[baseIndex + 34] = max(description[baseIndex + 34], e[RET]);
+		description[baseIndex + 35] = max(description[baseIndex + 35], delayedDamage);
+		var hpr = description[baseIndex + 36];
 		var ehpr = e[HP] / e[THP];
-		description[baseIndex + 33] = hpr !== 0 && hpr < ehpr ? hpr : ehpr;
-		description[baseIndex + 34] += 1;
+		description[baseIndex + 36] = hpr !== 0 && hpr < ehpr ? hpr : ehpr;
+		description[baseIndex + 37] += 1;
 		var damageMultiplier = (1 + max(e[STR], e[MAG]) / 100) * (1 + 0.4 * e[AGI] / 1000);
-		description[baseIndex + 35] = max(description[baseIndex + 35], damageMultiplier);
+		description[baseIndex + 38] = max(description[baseIndex + 38], damageMultiplier);
 	}
 
 	var alive = xs[sID] !== null;
@@ -4400,12 +4692,42 @@ function getDescription(@state) {
 
 	var spos = xs[sID][POS];
 	var getDist =@ function(@e) {
+			if (xs[e][SUMMON]) { return 35; }
 			return getPathLength(spos, xs[e][POS]);
 	};
 
 	var enemy = alive ? getNearestEnemyLeekFromState(state) : null;
 	var xeDist = enemy === null || !alive ? 0 : getDist(enemy);
 	xeDist = xeDist === null ? getCellDistance(spos, xs[enemy][POS]) : xeDist;
+	var directMLaser = 0, directElectrisor = 0, directKatana;
+	if (enemy !== null) {
+		var eacs =@ getlAccessibleCells(xs[enemy][MP] - 1)(xs[enemy][POS]);
+		var anyCell = aAny(function(@x) { return eacs[x] != null; });
+		if (inArray(xs[enemy][WEAPONS], WEAPON_M_LASER)) {
+			var ts =@ getMLaserCellsTargetingCell(spos);
+			directMLaser = anyCell(ts) ? 1 : 0;
+		}
+		if (inArray(xs[enemy][WEAPONS], WEAPON_ELECTRISOR)) {
+			var ts =@ getElectrisorCellsTargetingCell(spos, getAliveAllies() + getAliveEnemies());
+			directElectrisor = anyCell(ts) ? 1 : 0;
+		}
+		if (inArray(xs[enemy][WEAPONS], WEAPON_KATANA)) {
+			var ts =@ getKatanaCellsTargetingCell(spos);
+			directKatana = anyCell(ts) ? 1 : 0;
+		}
+	}
+
+	var delayedDamage = 0;
+	if (alive) {
+		for (var effect in xs[sID][EFFS]) {
+			if (effect[0] == EFFECT_HEAL) {
+				delayedDamage -= effect[1];
+			}
+			else if (effect[0] == EFFECT_POISON) {
+				delayedDamage += effect[1];
+			}
+		}
+	}
 
 	push(description, alive ? xs[sID][HP] : 0);
 	push(description, alive ? xs[sID][TMP] : 0);
@@ -4418,77 +4740,51 @@ function getDescription(@state) {
 	push(description, alive ? xs[sID][ASH] : 0);
 	push(description, alive ? xs[sID][RSH] : 0);
 	push(description, alive ? xs[sID][RET] : 0);
+	push(description, alive ? delayedDamage : 0);
 	push(description, alive ? xs[sID][HP] / xs[sID][THP] : 0);
 	push(description, alive ? 1 : 0);
 	push(description, alive ? (1 + max(xs[sID][STR], xs[sID][MAG]) / 100) * (1 + 0.4 * xs[sID][AGI] / 1000) : 0);
 	push(description, alive ? getDistance(spos, 306) : 0);
 	push(description, alive ? (enemy === null || checkCellSafety(spos, xs[enemy]) ? 1 : 0) : 0);
 	push(description, alive ? averageDmgFromLeeksOnCell(access(ENEMY))(xs[sID][POS])(xs) : 0);
-	push(description, alive ? (getLevel() < 295 ? 0 : count(getMLaserCellsTargetingCell(state, spos))) : 0);
 	push(description, alive ? xeDist : 0);
 	push(description, alive ? average(aMap(getDist)(allies)) : 0);
-	push(description, 1);
+
+	push(description, alive ? directMLaser : 0);
+	push(description, alive ? directElectrisor : 0);
+	push(description, alive ? directKatana : 0);
 
 	return description;
 }
 
-function evaluateDescription(@description) {
+function evaluateDescription2(@description) {
 	var len = count(description);
 	var evaluation = 0;
 	for (var i = 0; i < len; i++) {
-		evaluation += description[i] * WEIGHTS[i];
+		evaluation += description[i] * WEIGHTS2[i];
 	}
 	return evaluation;
 }
 
-function evaluateState(@state, @description) {
-	var sID = getLeek();
-	var xs =@ state[S_ALL];
-
-	aIter(compose(removeDead(state))(applyEffects))(xs);
-
-	var alive = xs[sID] !== null;
-	//if (xs[sID] === null) { return null; }
-	var enemies =@ state[S_ENEMIES];
-	var allies =@ state[S_ALLIES];
-
-	var spos = xs[sID][POS];
-	var getDist =@ function(@e) {
-			return getPathLength(spos, xs[e][POS]);
-	};
-
-	var enemy = alive ? getNearestEnemyLeekFromState(state) : null;
-	var xeDist = enemy === null || !alive ? 0 : getDist(enemy);
-	xeDist = xeDist === null ? getCellDistance(spos, xs[enemy][POS]) : xeDist;
-
-	description =@ getDescription(xs);
-
-	push(description, alive ? xs[sID][HP] : 0);
-	push(description, alive ? xs[sID][TMP] : 0);
-	push(description, alive ? xs[sID][TTP] : 0);
-	push(description, alive ? xs[sID][STR] : 0);
-	push(description, alive ? xs[sID][MAG] : 0);
-	push(description, alive ? xs[sID][WIS] : 0);
-	push(description, alive ? xs[sID][AGI] : 0);
-	push(description, alive ? xs[sID][RES] : 0);
-	push(description, alive ? xs[sID][ASH] : 0);
-	push(description, alive ? xs[sID][RSH] : 0);
-	push(description, alive ? xs[sID][RET] : 0);
-	push(description, alive ? xs[sID][HP] / xs[sID][THP] : 0);
-	push(description, alive ? 1 : 0);
-	push(description, alive ? (1 + max(xs[sID][STR], xs[sID][MAG]) / 100) * (1 + 0.4 * xs[sID][AGI] / 1000) : 0);
-	push(description, alive ? getDistance(spos, 306) : 0);
-	push(description, alive ? (enemy === null || checkCellSafety(spos, xs[enemy]) ? 1 : 0) : 0);
-	push(description, alive ? averageDmgFromLeeksOnCell(access(ENEMY))(xs[sID][POS])(xs) : 0);
-	push(description, alive ? (getLevel() < 295 ? 0 : count(getMLaserCellsTargetingCell(state, spos))) : 0);
-	push(description, alive ? xeDist : 0);
-	push(description, alive ? average(aMap(getDist)(allies)) : 0);
-	push(description, 1);
-
-	var evaluation = evaluateDescription(description);
-
-	return evaluation;
-}
+global WEIGHTS2 = 	[ -40, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 5
+					, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 5
+					, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 10
+					, -20000, -10000, -5
+					, 20, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -5
+					, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -10
+					, 5, 5, 30, 5, 5, 5, 5, 5, 5, 5, 5, -5
+					, 10000, 10, 5
+					, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1
+					, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1
+					, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1
+					, -1, -1, -1
+					, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1
+					, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1
+					, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1
+					, 1, 1, 1
+					, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1
+					, 500, 1, 1, -1, 20, -2, -80, -1
+					, -10000, -5000, -5000];
 
 global ALL_IDS = getAllies() + getEnemies();
 
@@ -4497,6 +4793,8 @@ function main() {
 	initObstacles(aMap(getCell)(getAliveAllies() + getAliveEnemies()));
 	var baseObstacles = __obstacles;
 	var gameState = generateGameState();
+	//var originalDescription = getDescription(gameState);
+	//var deltaDescription = num_1x1(function(@y, @x) { return x - y; })(originalDescription);
 
 	//debug(getOperations() + 'op');
 
@@ -4517,8 +4815,8 @@ function main() {
 
 	var maxOp = 19000000;
 	var nbAncestors = 3;
-	var nbMutants = 3;
-	var nbNewcomers = 4;
+	var nbMutants = 2;
+	var nbNewcomers = 5;
 	var maxPop = nbAncestors + nbMutants + nbNewcomers;
 	while (getOperations() < maxOp && count(population) < maxPop) {
 		__obstacles = baseObstacles;
@@ -4527,13 +4825,17 @@ function main() {
 		opout_mutate += getOperations();
 		if (actions === []) { continue; }
 		opin_evaluate += getOperations();
-		var description = getDescription(getLastState(actions));
-		var value = evaluateDescription(description);
-		if (value === null) { debug(getLastState(actions)); continue; }
+		//var description = /*deltaDescription(*/getDescription(getLastState(actions));//);
+		//var value = evaluateDescription(description);
+		var description = getDescription2(getLastState(actions));
+		var value = evaluateDescription2(description);
+		// var value = evaluateState(getLastState(actions));
+		if (value === null) { continue; }
 		opout_evaluate += getOperations();
 		totalPop++;
 		opin_prio += getOperations();
-		popInsert(value, [actions, function(){ return description; }]);
+		// popInsert(value, [actions, function(){ return description; }]);
+		popInsert(value, actions);
 		opout_prio += getOperations();
 	}
 
@@ -4548,19 +4850,24 @@ function main() {
 		while (getOperations() < maxOp && i < nbMutants) {
 			__obstacles = baseObstacles;
 			opin_mutate += getOperations();
-			var actions =@ mutateActions(ancestors[randInt(0, nbAncestors)](null)[0], gameState, baseObstacles);
+			// var actions =@ mutateActions(ancestors[randInt(0, nbAncestors)](null)[0], gameState, baseObstacles);
+			var actions =@ mutateActions(ancestors[randInt(0, nbAncestors)](null), gameState, baseObstacles);
 			opout_mutate += getOperations();
 			i++;
 			if (actions === []) { continue; }
 			//debug(count(actions[0]));
 			opin_evaluate += getOperations();
-			var description = getDescription(getLastState(actions));
-			var value = evaluateDescription(description);
-			if (value === null) { debug(getLastState(actions)); continue; }
+			// var description = /*deltaDescription(*/getDescription(getLastState(actions));//);
+			// var value = evaluateDescription(description);
+			var description = getDescription2(getLastState(actions));
+			var value = evaluateDescription2(description);
+			// var value = evaluateState(getLastState(actions));
+			if (value === null) { continue; }
 			opout_evaluate += getOperations();
 			totalPop++;
 			opin_prio += getOperations();
-			popInsert(value, [actions, function(){ return description; }]);
+			// popInsert(value, [actions, function(){ return description; }]);
+			popInsert(value, actions);
 			opout_prio += getOperations();
 		}
 		while (getOperations() < maxOp && count(population) < maxPop) {
@@ -4571,13 +4878,17 @@ function main() {
 			if (actions === []) { continue; }
 			//debug(count(actions[0]));
 			opin_evaluate += getOperations();
-			var description = getDescription(getLastState(actions));
-			var value = evaluateDescription(description);
-			if (value === null) { debug(getLastState(actions)); continue; }
+			// var description = /*deltaDescription(*/getDescription(getLastState(actions));//);
+			// var value = evaluateDescription(description);
+			var description = getDescription2(getLastState(actions));
+			var value = evaluateDescription2(description);
+			// var value = evaluateState(getLastState(actions));
+			if (value === null) { continue; }
 			opout_evaluate += getOperations();
 			totalPop++;
 			opin_prio += getOperations();
-			popInsert(value, [actions, function(){ return description; }]);
+			// popInsert(value, [actions, function(){ return description; }]);
+			popInsert(value, actions);
 			opout_prio += getOperations();
 		}
 	}
@@ -4596,13 +4907,14 @@ function main() {
 	var value;
 	var description;
 	var elected =@ population[0](value);
-	if (randInt(0, 10) === 0) {
-		elected =@ population[randInt(0, count(population))](value);
-	}
+	// if (randInt(0, 10) === 0) {
+	// 	elected =@ population[randInt(0, count(population))](value);
+	// }
 
 	if (elected !== null) {
-		debug(jsonEncode(elected[1]()));
-		ACTIONS_QUEUE =@ elected[0];
+		//debug(jsonEncode(elected[1]()));
+		// ACTIONS_QUEUE =@ elected[0];
+		ACTIONS_QUEUE =@ elected;
 		aIter(act)(shift(ACTIONS_QUEUE));
 		//sayShit();
 	}
@@ -4697,18 +5009,8 @@ function checkCellSafety(cell, @entity) {
 
 global REGISTERS = ['000', '001', '002', '003', '004', '005', '006', '007', '008', '009', '010', '011', '012', '013', '014', '015', '016', '017', '018', '019', '020', '021', '022', '023', '024', '025', '026', '027', '028', '029', '030', '031', '032', '033', '034', '035', '036', '037', '038', '039', '040', '041', '042', '043', '044', '045', '046', '047', '048', '049', '050', '051', '052', '053', '054', '055', '056', '057', '058', '059', '060', '061', '062', '063', '064', '065', '066', '067', '068', '069', '070', '071', '072', '073', '074', '075', '076', '077', '078', '079', '080', '081', '082', '083', '084', '085', '086', '087', '088', '089', '090', '091', '092', '093', '094', '095', '096', '097', '098'];
 
-global WEIGHTS = get_weights_from_registers();
+// global WEIGHTS = jsonDecode(join(getRegisters(), ""));
 
-global SKIP_ODD = 50;
-
-function get_weights_from_registers() {
-	var weights = "";
-	var registers = getRegisters();
-	for (var key in REGISTERS) {
-		weights += registers[key];
-	}
-	return jsonDecode(weights);
-}
 
 function feedforward(@bs, @ws, @a) {
 	var steps = count(bs);
@@ -4716,5 +5018,16 @@ function feedforward(@bs, @ws, @a) {
 	for (var i = 0; i < steps; i++) {
 		inter =@ mtx_map(sigmoid)(mtx_add(mtx_dot_row_vec(ws[i], inter), bs[i]));
 	}
-	return inter;
+	return /*inter[0][1] -*/ inter[0][0];
 }
+
+// if (getTurn() == 1) {
+// 	var stuff = [];
+// 	for (var e in getAllies() + getEnemies()) {
+// 		if (isSummon(e)) { continue; }
+// 		stuff[e] = getWeapons(e) + getChips(e);
+// 	}
+// 	debug(jsonEncode(stuff));
+// }
+
+main();
