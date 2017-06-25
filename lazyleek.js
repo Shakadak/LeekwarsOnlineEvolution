@@ -1,9 +1,11 @@
-
+//for (var chip in getChips()) {
+	//debug(getChipName(chip) + ": " + getCooldown(chip));
+//}
 ///////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 
-global cry = ["WHY DID IT HAVE TO LEEK?!", "YOLO!","CARPE DIEM!", "AAAAAAH!", "GIVE ME YOUR SOIL!!!", "WATCH MY BULB-FLEX!!!", "JE M'AIME!", "I NEED MORE FERTILIZER!!!", "...", "DOT! DOT! DOT!", "POINT! POINT! POINT!", "PLEASE DON'T COOK ME UP!", "WHAT THE GARDEN AM I DOING ???", "BOILED!", "FRIED!", "RAW!", "FROZEN!", "HOW MUCH DET-DEDOTATED HAY?", "ACHOO!", "I WANT TO LEEKITY LEEK YOU!!!", "AUGH!", "DON'T HARVEST ME! I STILL HAVEN'T GROWN MY PISTIL!", "LEEEK! THAT'S SOME FLESHY LEAVES YOU'VE GOT HERE!", "OH BULB! MIND SHARING HOW YOU GROWED THOSE STEMS?", "BELIEVE ME, I'M USUALLY A CALM PLANT!", "MY ROOTS ARE DRY!", "BREATHE OUT, BREATHE IN!", "DO YOU EVEN HILL?!", "POURQUOI LE POIREAU A-T-IL TRAVERSÉ LA ROUTE?", "MY ROOTS BEING LUSCIOUS DON'T MEAN I'M A HIPSTER.", "YOU'VE BEEN SQUASHED!", "WHO'S INVASIVE NOW?", "🏃💨", "Vous n'avez pas d'IA."];
+global cry = ["WHY DID IT HAVE TO LEEK?!", "YOLO!","CARPE DIEM!", "AAAAAAH!", "GIVE ME YOUR SOIL!!!", "WATCH MY BULB-FLEX!!!", "JE M'AIME !", "I NEED MORE FERTILIZER!!!", "...", "DOT! DOT! DOT!", "POINT ! POINT ! POINT !", "PLEASE DON'T COOK ME UP!", "WHAT THE GARDEN AM I DOING ???", "BOILED!", "FRIED!", "RAW!", "FROZEN!", "HOW MUCH DET-DEDOTATED HAY?", "ACHOO!", "I WANT TO LEEKITY LEEK YOU!!!", "AUGH!", "DON'T HARVEST ME! I STILL HAVEN'T GROWN MY PISTIL!", "LEEEK! THAT'S SOME FLESHY LEAVES YOU'VE GOT HERE!", "OH BULB! MIND SHARING HOW YOU GROWED THOSE STEMS?", "BELIEVE ME, I'M USUALLY A CALM PLANT!", "MY ROOTS ARE DRY!", "BREATHE OUT, BREATHE IN!", "DO YOU EVEN HILL?!", "POURQUOI LE POIREAU A-T-IL TRAVERSÉ LA ROUTE ?", "MY ROOTS BEING LUSCIOUS DON'T MEAN I'M A HIPSTER.", "YOU'VE BEEN SQUASHED!", "WHO'S INVASIVE NOW?", "🏃💨", "Vous n'avez pas d'IA.", "Traul et bah il é mosh"];
 global crySize = count(cry);
 
 function sayShit(){say(cry[randInt(0, crySize)]);}
@@ -175,6 +177,13 @@ function pqmaxTake(@xs) { return function(n) {
 * uctuple3 : (a, b, c) -> Tuple a b c
 */
 function uctuple3(_x, _y, _z) {
+    return function(@x_, @y_, @z_) { x_ =@ _x; y_ =@ _y; z_ =@ _z; };
+}
+
+/**
+* utuple3 : (a, b, c) -> Tuple a b c
+*/
+function ugtuple3(@_x, @_y, _z) {
     return function(@x_, @y_, @z_) { x_ =@ _x; y_ =@ _y; z_ =@ _z; };
 }
 
@@ -2337,6 +2346,7 @@ global positiveEffects = [
 	EFFECT_SHACKLE_MP	: false,
 	EFFECT_SHACKLE_STRENGTH : false,
 	EFFECT_SHACKLE_TP	: false,
+	EFFECT_VULNERABILITY : false,
 	];
 
 global negativeEffects = daMap(not)(@@positiveEffects);
@@ -2354,7 +2364,12 @@ function applyEffect(@wearer) { return function(@effect) {
 function addEffect(@buff) { return function(@wearer) { return function(@effect) {
 	var item_id = effect[5];
 	if (buff) {
-		wearer[EFFS] = aFilter(function(@eff) {return eff[5] !== item_id; })(wearer[EFFS]);
+		wearer[EFFS] = aFilter(function(@eff) {
+			if (eff[5] === item_id) {
+				removeEffect(wearer)(eff);
+				return false;
+			}
+			return true; })(wearer[EFFS]);
 	}
 	push(wearer[EFFS], effect);
 };};}
@@ -2388,21 +2403,24 @@ function removeEffect(@wearer) { return function(@effect) {
 		wearer[TP] -= effect[1];
 	}
 	else if (type === EFFECT_SHACKLE_MAGIC) {
-		wearer[MAG] += effect[1];
+		wearer[MAG] -= effect[1];
 	}
 	else if (type === EFFECT_SHACKLE_STRENGTH) {
-		wearer[STR] += effect[1];
+		wearer[STR] -= effect[1];
 	}
 	else if (type === EFFECT_SHACKLE_MP) {
-		wearer[TMP] += effect[1];
-		wearer[MP] += effect[1];
+		wearer[TMP] -= effect[1];
+		wearer[MP] -= effect[1];
 	}
 	else if (type === EFFECT_SHACKLE_TP) {
-		wearer[TTP] += effect[1];
-		wearer[TP] += effect[1];
+		wearer[TTP] -= effect[1];
+		wearer[TP] -= effect[1];
 	}
 	else if (type === EFFECT_DAMAGE_RETURN) {
 		wearer[RET] -= effect[1];
+	}
+	else if (type === EFFECT_VULNERABILITY) {
+		wearer[RET] += effect[1];
 	}
 };}
 
@@ -2430,6 +2448,7 @@ function atk(@dmg, @ls, @target, @caster) {
 	target[HP] -= effDmg;
 	caster[HP] = heal(ls * effDmg, caster);
 	caster[HP] -= dmg * target[RET] / 100;
+	target[THP] -= 0.05 * effDmg;
 }
 
 function removeDead(@state) {
@@ -2459,7 +2478,7 @@ WEAPON_AXE : function(@state, @caster, @center) {
 			var debuff = shack(target);
 			target[MP] -= debuff;
 			target[TMP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_MP, debuff, caster[ID], 1, false, WEAPON_AXE, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_MP, -debuff, caster[ID], 1, false, WEAPON_AXE, target[ID]]);
 			removeDead(state)(target);
 		}
 	};},
@@ -2494,7 +2513,7 @@ WEAPON_BROADSWORD : function(@state, @caster, @center) {
 			var debuff = shack(target);
 			target[TTP] -= debuff;
 			target[TP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 1, false, WEAPON_BROADSWORD, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 1, false, WEAPON_BROADSWORD, target[ID]]);
 			removeDead(state)(target);
 		}
 	};},
@@ -2508,7 +2527,7 @@ WEAPON_DESTROYER : function(@state, @caster, @center) {
 			atk(dmg, ls, target, caster);
 			var debuff = shack(target);
 			target[STR] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, debuff, caster[ID], 1, false, WEAPON_DESTROYER, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, -debuff, caster[ID], 1, false, WEAPON_DESTROYER, target[ID]]);
 			removeDead(state)(target);
 		}
 	};},
@@ -2604,13 +2623,13 @@ WEAPON_KATANA : function(@state, @caster, @center) {
 			var debuff = shack(target);
 			target[MP] -= debuff;
 			target[TMP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_MP, debuff, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_MP, -debuff, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
 			target[TP] -= debuff;
 			target[TTP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
 			var debuffSTR = shackSTR(target);
 			target[STR] -= debuffSTR;
-			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, debuffSTR, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, -debuffSTR, caster[ID], 1, false, WEAPON_KATANA, target[ID]]);
 			removeDead(state)(target);
 		}
 	};},
@@ -2744,19 +2763,19 @@ CHIP_BALL_AND_CHAIN : function(@state, @caster, @center) {
 			var debuff = shack0(target);
 			target[TMP] -= debuff;
 			target[MP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_MP, debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_MP, -debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
 		}
         else if (getCellDistance(center, tgt) == 1) {
 			var debuff = shack1(target);
 			target[TMP] -= debuff;
 			target[MP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
 		}
         else if (getCellDistance(center, tgt) == 2) {
 			var debuff = shack2(target);
 			target[TMP] -= debuff;
 			target[MP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
 		}
 
 	};},
@@ -2882,6 +2901,10 @@ CHIP_DOPING : function(@state, @caster, @center) {
 		if (center == target[POS]) {
 			target[STR] += buff;
 			addEffect(true)(target)([EFFECT_BUFF_STRENGTH, buff, caster[ID], 4, false, CHIP_DOPING, target[ID]]);
+			target[HP] -= buff;
+			if (target[HP] <= 0) {
+				removeDead(state)(target);
+			}
 		}
 	};},
 CHIP_DRIP : function(@state, @caster, @center) {
@@ -2943,7 +2966,7 @@ CHIP_FIRE_BULB : function(@state, @caster, @center) {
 					, CHIPS:	[ CHIP_SPARK: 0
 								, CHIP_FLAME: 0
 								, CHIP_METEORITE: 0
-								, CHIP_DOPING: 0 ]
+								, CHIP_DEVIL_STRIKE: 0 ]
 					, EQ	: null
 					, WEAPONS: []
 					, ID	: new_id
@@ -3007,8 +3030,8 @@ CHIP_FRACTURE : function(@state, @caster, @center) {
 			var debuff = shack(target);
 			target[STR] -= debuff;
 			target[MAG] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, debuff, caster[ID], 2, false, CHIP_FRACTURE, target[ID]]);
-            addEffect(false)(target)([EFFECT_SHACKLE_MAGIC, debuff, caster[ID], 2, false, CHIP_FRACTURE, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_STRENGTH, -debuff, caster[ID], 2, false, CHIP_FRACTURE, target[ID]]);
+            addEffect(false)(target)([EFFECT_SHACKLE_MAGIC, -debuff, caster[ID], 2, false, CHIP_FRACTURE, target[ID]]);
 		}
 	};},
 CHIP_HEALER_BULB : function(@state, @caster, @center) {
@@ -3146,6 +3169,8 @@ CHIP_ICED_BULB : function(@state, @caster, @center) {
 	return function(@target) {
 	};},
 CHIP_INVERSION : function(@state, @caster, @center) {
+	var crit = 1 + 0.4 * caster[AGI] / 1000;
+	var rheal = rawEff(39, caster[WIS]) * crit;
 	return function(@target) {
 		if (target[POS] == center) {
 			dswap(caster[POS], target[POS]);
@@ -3153,6 +3178,13 @@ CHIP_INVERSION : function(@state, @caster, @center) {
 			dswap(caster[AREA_CIRCLE_1], target[AREA_CIRCLE_1]);
 			dswap(caster[AREA_CIRCLE_2], target[AREA_CIRCLE_2]);
 			dswap(caster[AREA_CIRCLE_3], target[AREA_CIRCLE_3]);
+			if (target[ALLY]) {
+				target[HP] = heal(rheal, target);
+			}
+			else {
+				target[RSH] -= 20;
+				addEffect(true)(target)([EFFECT_VULNERABILITY, 20, caster[ID], 1, false, CHIP_INVERSION, target[ID]]);
+			}
 		}
 	};},
 CHIP_LEATHER_BOOTS : function(@state, @caster, @center) {
@@ -3196,9 +3228,52 @@ CHIP_LIGHTNING : function(@state, @caster, @center) {
 		}
 	};},
 CHIP_LIGHTNING_BULB : function(@state, @caster, @center) {
+	__obstacles[center] = true;
+	var clevel = caster[LEVEL] - 1;
+	var corder = caster[ORDER];
+	var new_id = state[S_MAX_ID]++;
+	var entity =@	[ THP	: 400 + round(200 * clevel / 300)
+					, HP	: 400 + round(200 * clevel / 300)
+					, TMP	: 4 + round(2 * clevel / 300)
+					, MP	: 4 + round(2 * clevel / 300)
+					, TTP	: 6 + round(4 * clevel / 300)
+					, TP	: 6 + round(4 * clevel / 300)
+					, SCI	: 0 + round(200 * clevel / 300)
+					, STR	: 0 + round(400 * clevel / 300)
+					, MAG	: 0
+					, WIS	: 0 + round(000 * clevel / 300)
+					, AGI	: 0 + round(100 * clevel / 300)
+					, RES	: 0 + round(000 * clevel / 300)
+					, ASH	: 0
+					, RSH	: 0
+					, RET : 0
+					, POS	: center
+					, TYPE: ENTITY_BULB
+					, EFFS: []
+					, CHIPS:	[ CHIP_SHOCK: 0
+								, CHIP_FLASH: 0
+								, CHIP_LIGHTNING: 0
+								, CHIP_DOPING: 0 ]
+					, EQ	: null
+					, WEAPONS: []
+					, ID	: new_id
+					, ORDER	: corder + 1
+					, AREA_POINT	: getApplicableArea(AREA_POINT)(center)
+					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
+					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
+					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
+					, ALLY	: true
+					, ENEMY	: false
+					, SUMMON	: true
+					, SUMMONER: caster[ID]
+					, NAME	: 'lightning_bulb'
+					, LEVEL	: clevel
+					];
+	aIter(function(@x) { if (x[ORDER] > corder) { x[ORDER]++; }})(state[S_ALL]);
+	push(state[S_ALLIES], new_id);
+	state[S_ALL][new_id] = entity;
+	insert(state[S_ORDER], new_id, corder);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_LIGHTNING_BULB);
 	};},
 CHIP_LOAM : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
@@ -3473,9 +3548,52 @@ CHIP_ROCKFALL : function(@state, @caster, @center) {
 		}
 	};},
 CHIP_ROCKY_BULB : function(@state, @caster, @center) {
+	__obstacles[center] = true;
+	var clevel = caster[LEVEL] - 1;
+	var corder = caster[ORDER];
+	var new_id = state[S_MAX_ID]++;
+	var entity =@	[ THP	: 400 + round(200 * clevel / 300)
+					, HP	: 400 + round(200 * clevel / 300)
+					, TMP	: 2 + round(1 * clevel / 300)
+					, MP	: 2 + round(1 * clevel / 300)
+					, TTP	: 4 + round(4 * clevel / 300)
+					, TP	: 4 + round(4 * clevel / 300)
+					, SCI	: 0 + round(000 * clevel / 300)
+					, STR	: 0 + round(200 * clevel / 300)
+					, MAG	: 0
+					, WIS	: 0 + round(000 * clevel / 300)
+					, AGI	: 0 + round(100 * clevel / 300)
+					, RES	: 0 + round(100 * clevel / 300)
+					, ASH	: 0
+					, RSH	: 0
+					, RET : 0
+					, POS	: center
+					, TYPE: ENTITY_BULB
+					, EFFS: []
+					, CHIPS:	[ CHIP_PEBBLE: 0
+								, CHIP_ROCK: 0
+								, CHIP_ROCKFALL: 0
+								, CHIP_HELMET: 0 ]
+					, EQ	: null
+					, WEAPONS: []
+					, ID	: new_id
+					, ORDER	: corder + 1
+					, AREA_POINT	: getApplicableArea(AREA_POINT)(center)
+					, AREA_CIRCLE_1	: getApplicableArea(AREA_CIRCLE_1)(center)
+					, AREA_CIRCLE_2	: getApplicableArea(AREA_CIRCLE_2)(center)
+					, AREA_CIRCLE_3	: getApplicableArea(AREA_CIRCLE_3)(center)
+					, ALLY	: true
+					, ENEMY	: false
+					, SUMMON	: true
+					, SUMMONER: caster[ID]
+					, NAME	: 'rocky_bulb'
+					, LEVEL	: clevel
+					];
+	aIter(function(@x) { if (x[ORDER] > corder) { x[ORDER]++; }})(state[S_ALL]);
+	push(state[S_ALLIES], new_id);
+	state[S_ALL][new_id] = entity;
+	insert(state[S_ORDER], new_id, corder);
 	return function(@target) {
-		compose(function(@name) { debugE("Item " + name + " not implemented."); })
-				(getItemName)(CHIP_ROCKY_BULB);
 	};},
 CHIP_SEVEN_LEAGUE_BOOTS : function(@state, @caster, @center) {
 	var crit = 1 + 0.4 * caster[AGI] / 1000;
@@ -3514,7 +3632,7 @@ CHIP_SLOW_DOWN : function(@state, @caster, @center) {
 			var debuff = shack(target);
 			target[TMP] -= debuff;
 			target[MP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_MP, debuff, caster[ID], 1, false, CHIP_SLOW_DOWN, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_MP, -debuff, caster[ID], 1, false, CHIP_SLOW_DOWN, target[ID]]);
 		}
 	};},
 CHIP_SOLIDIFICATION : function(@state, @caster, @center) {
@@ -3537,19 +3655,19 @@ CHIP_SOPORIFIC : function(@state, @caster, @center) {
 			var debuff = shack0(target);
 			target[TTP] -= debuff;
 			target[TP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
 		}
         else if (getCellDistance(center, tgt) == 1) {
 			var debuff = shack1(target);
 			target[TTP] -= debuff;
 			target[TP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
 		}
         else if (getCellDistance(center, tgt) == 2) {
 			var debuff = shack2(target);
 			target[TTP] -= debuff;
 			target[TP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 2, false, CHIP_SOPORIFIC, target[ID]]);
 		}
 
 	};},
@@ -3644,7 +3762,7 @@ CHIP_TRANQUILIZER : function(@state, @caster, @center) {
 			var debuff = shack(target);
 			target[TTP] -= debuff;
 			target[TP] -= debuff;
-			addEffect(false)(target)([EFFECT_SHACKLE_TP, debuff, caster[ID], 1, false, CHIP_TRANQUILIZER, target[ID]]);
+			addEffect(false)(target)([EFFECT_SHACKLE_TP, -debuff, caster[ID], 1, false, CHIP_TRANQUILIZER, target[ID]]);
 		}
 	};},
 CHIP_VACCINE : function(@state, @caster, @center) {
@@ -3924,7 +4042,7 @@ WEAPON_M_LASER : entityToBeKilled,
 WEAPON_PISTOL : entityToBeKilled,
 WEAPON_SHOTGUN : entityToBeKilled,
 CHIP_ACCELERATION : bulbeToBeHelped,
-CHIP_ADRENALINE : leekToBeHelped,
+CHIP_ADRENALINE : allyToBeHelped,
 CHIP_ANTIDOTE : alliedLeekWithEffect(EFFECT_POISON),
 CHIP_ARMOR : leekToBeHelped,
 CHIP_ARMORING : leekToBeHelped,
@@ -3936,7 +4054,7 @@ CHIP_CARAPACE : bulbeToBeHelped,
 CHIP_COLLAR : bulbeToBeHelped,
 CHIP_CURE : leekToBeHealed,
 CHIP_DEVIL_STRIKE : leekToBeKilled,
-CHIP_DOPING : leekToBeHelped,
+CHIP_DOPING : allyToBeHelped,
 CHIP_DRIP : allyToBeHealed,
 CHIP_FEROCITY : bulbeToBeHelped,
 CHIP_FERTILIZER : bulbeToBeHelped,
@@ -3959,14 +4077,14 @@ CHIP_LOAM : bulbeToBeHelped,
 CHIP_METALLIC_BULB : anyEntity,
 CHIP_METEORITE : entityToBeKilled,
 CHIP_MIRROR : leekToBeHelped,
-CHIP_MOTIVATION : leekToBeHelped,
+CHIP_MOTIVATION : allyToBeHelped,
 CHIP_PEBBLE : entityToBeKilled,
 CHIP_PLAGUE : leekToBeKilled,
-CHIP_PROTEIN : leekToBeHelped,
+CHIP_PROTEIN : allyToBeHelped,
 CHIP_PUNY_BULB : anyEntity,
 CHIP_RAGE : leekToBeHelped,
 CHIP_RAMPART : leekToBeHelped,
-CHIP_REFLEXES : leekToBeHelped,
+CHIP_REFLEXES : allyToBeHelped,
 CHIP_REGENERATION : leekToBeSaved,
 CHIP_REMISSION : bulbeToBeHealed,
 CHIP_RESURRECTION : "CHIP_RESURRECTION",
@@ -3977,12 +4095,12 @@ CHIP_SEVEN_LEAGUE_BOOTS : leekToBeHelped,
 CHIP_SHIELD : leekToBeHelped,
 CHIP_SHOCK : entityToBeKilled,
 CHIP_SLOW_DOWN : leekToBeKilled,
-CHIP_SOLIDIFICATION : leekToBeHelped,
+CHIP_SOLIDIFICATION : allyToBeHelped,
 CHIP_SOPORIFIC : entityToBeKilled,
 CHIP_SPARK : entityToBeKilled,
 CHIP_STALACTITE : entityToBeKilled,
-CHIP_STEROID : leekToBeHelped,
-CHIP_STRETCHING : leekToBeHelped,
+CHIP_STEROID : allyToBeHelped,
+CHIP_STRETCHING : allyToBeHelped,
 CHIP_TELEPORTATION : anyEntity,
 CHIP_THORN : leekToBeHelped,
 CHIP_TOXIN : leekToBeKilled,
@@ -3990,114 +4108,114 @@ CHIP_TRANQUILIZER : leekToBeKilled,
 CHIP_VACCINE : leekToBeHelped,
 CHIP_VENOM : leekToBeKilled,
 CHIP_WALL : leekToBeHelped,
-CHIP_WARM_UP : leekToBeHelped,
+CHIP_WARM_UP : allyToBeHelped,
 CHIP_WHIP : bulbeToBeHelped,
-CHIP_WINGED_BOOTS : leekToBeHelped,
+CHIP_WINGED_BOOTS : allyToBeHelped,
 ];
 
 global ITEMS_TARGETS = [
-WEAPON_AXE : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_AXE)),
-WEAPON_B_LASER : getLaserTargets(anyEntity, WEAPON_B_LASER, 2),
-WEAPON_BROADSWORD : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_BROADSWORD)),
-WEAPON_DESTROYER : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_DESTROYER)),
-WEAPON_DOUBLE_GUN : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_DOUBLE_GUN)),
-WEAPON_ELECTRISOR : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_1), canTargetCellWith(WEAPON_ELECTRISOR)),
-WEAPON_FLAME_THROWER : getLaserTargets(entityToBeKilled, WEAPON_FLAME_THROWER, 2),
-WEAPON_GAZOR : getAreaTargets(prepareArea(leekToBeKilled, AREA_CIRCLE_3), canTargetCellWith(WEAPON_GAZOR)),
-WEAPON_GRENADE_LAUNCHER : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(WEAPON_GRENADE_LAUNCHER)),
-WEAPON_KATANA : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_KATANA)),
-WEAPON_LASER : getLaserTargets(entityToBeKilled, WEAPON_LASER, 2),
-WEAPON_MACHINE_GUN : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_MACHINE_GUN)),
-WEAPON_MAGNUM : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_MAGNUM)),
-WEAPON_M_LASER : getLaserTargets(entityToBeKilled, WEAPON_M_LASER, 4),
-WEAPON_PISTOL : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_PISTOL)),
-WEAPON_SHOTGUN : getSingleTargets(entityToBeKilled, canTargetCellWith(WEAPON_SHOTGUN)),
-CHIP_ACCELERATION : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_ACCELERATION)),
-CHIP_ADRENALINE : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_1), canTargetCellWith(CHIP_ADRENALINE)),
-CHIP_ANTIDOTE : getSingleTargets(alliedLeekWithEffect(EFFECT_POISON), canTargetCellWith(CHIP_ANTIDOTE)),
-CHIP_ARMOR : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_ARMOR)),
-CHIP_ARMORING : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_ARMORING)),
-CHIP_BALL_AND_CHAIN : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_BALL_AND_CHAIN)),
-CHIP_BANDAGE : getSingleTargets(allyToBeHealed, canTargetCellWith(CHIP_BANDAGE)),
-CHIP_BARK : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_BARK)),
-CHIP_BURNING : getAreaTargets(prepareArea(bulbeToBeKilled, AREA_CIRCLE_3), canTargetCellWith(CHIP_BURNING)),
-CHIP_CARAPACE : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_CARAPACE)),
-CHIP_COLLAR : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_COLLAR)),
-CHIP_CURE : getSingleTargets(leekToBeHealed, canTargetCellWith(CHIP_CURE)),
+WEAPON_AXE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_AXE], canTargetCellWith(WEAPON_AXE)),
+WEAPON_B_LASER : getLaserTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_B_LASER], WEAPON_B_LASER, 2),
+WEAPON_BROADSWORD : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_BROADSWORD], canTargetCellWith(WEAPON_BROADSWORD)),
+WEAPON_DESTROYER : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_DESTROYER], canTargetCellWith(WEAPON_DESTROYER)),
+WEAPON_DOUBLE_GUN : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_DOUBLE_GUN], canTargetCellWith(WEAPON_DOUBLE_GUN)),
+WEAPON_ELECTRISOR : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[WEAPON_ELECTRISOR], AREA_CIRCLE_1), canTargetCellWith(WEAPON_ELECTRISOR)),
+WEAPON_FLAME_THROWER : getLaserTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_FLAME_THROWER], WEAPON_FLAME_THROWER, 2),
+WEAPON_GAZOR : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[WEAPON_GAZOR], AREA_CIRCLE_3), canTargetCellWith(WEAPON_GAZOR)),
+WEAPON_GRENADE_LAUNCHER : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[WEAPON_GRENADE_LAUNCHER], AREA_CIRCLE_2), canTargetCellWith(WEAPON_GRENADE_LAUNCHER)),
+WEAPON_KATANA : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_KATANA], canTargetCellWith(WEAPON_KATANA)),
+WEAPON_LASER : getLaserTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_LASER], WEAPON_LASER, 2),
+WEAPON_MACHINE_GUN : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_MACHINE_GUN], canTargetCellWith(WEAPON_MACHINE_GUN)),
+WEAPON_MAGNUM : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_MAGNUM], canTargetCellWith(WEAPON_MAGNUM)),
+WEAPON_M_LASER : getLaserTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_M_LASER], WEAPON_M_LASER, 4),
+WEAPON_PISTOL : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_PISTOL], canTargetCellWith(WEAPON_PISTOL)),
+WEAPON_SHOTGUN : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[WEAPON_SHOTGUN], canTargetCellWith(WEAPON_SHOTGUN)),
+CHIP_ACCELERATION : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_ACCELERATION], canTargetCellWith(CHIP_ACCELERATION)),
+CHIP_ADRENALINE : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_ADRENALINE], AREA_CIRCLE_1), canTargetCellWith(CHIP_ADRENALINE)),
+CHIP_ANTIDOTE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_ANTIDOTE], canTargetCellWith(CHIP_ANTIDOTE)),
+CHIP_ARMOR : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_ARMOR], canTargetCellWith(CHIP_ARMOR)),
+CHIP_ARMORING : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_ARMORING], canTargetCellWith(CHIP_ARMORING)),
+CHIP_BALL_AND_CHAIN : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_BALL_AND_CHAIN], AREA_CIRCLE_2), canTargetCellWith(CHIP_BALL_AND_CHAIN)),
+CHIP_BANDAGE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_BANDAGE], canTargetCellWith(CHIP_BANDAGE)),
+CHIP_BARK : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_BARK], canTargetCellWith(CHIP_BARK)),
+CHIP_BURNING : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_BURNING], AREA_CIRCLE_3), canTargetCellWith(CHIP_BURNING)),
+CHIP_CARAPACE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_CARAPACE], canTargetCellWith(CHIP_CARAPACE)),
+CHIP_COLLAR : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_COLLAR], canTargetCellWith(CHIP_COLLAR)),
+CHIP_CURE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_CURE], canTargetCellWith(CHIP_CURE)),
 CHIP_DEVIL_STRIKE : function(@state) { return [getSelf(state)[POS]]; },
-CHIP_DOPING : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_DOPING)),
-CHIP_DRIP : getAreaTargets(prepareArea(allyToBeHealed, AREA_CIRCLE_2), canTargetCellWith(CHIP_DRIP)),
-CHIP_FEROCITY : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_FEROCITY)),
-CHIP_FERTILIZER : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_FERTILIZER)),
+CHIP_DOPING : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_DOPING], canTargetCellWith(CHIP_DOPING)),
+CHIP_DRIP : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_DRIP], AREA_CIRCLE_2), canTargetCellWith(CHIP_DRIP)),
+CHIP_FEROCITY : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_FEROCITY], canTargetCellWith(CHIP_FEROCITY)),
+CHIP_FERTILIZER : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_FERTILIZER], canTargetCellWith(CHIP_FERTILIZER)),
 CHIP_FIRE_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_FIRE_BULB, getSelf(state)[POS]);
 },
-CHIP_FLAME : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_FLAME)),
-CHIP_FLASH : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_1), canTargetCellWith(CHIP_FLASH)),
-CHIP_FORTRESS : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_FORTRESS)),
-CHIP_FRACTURE : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_FRACTURE)),
+CHIP_FLAME : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_FLAME], canTargetCellWith(CHIP_FLAME)),
+CHIP_FLASH : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_FLASH], AREA_CIRCLE_1), canTargetCellWith(CHIP_FLASH)),
+CHIP_FORTRESS : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_FORTRESS], canTargetCellWith(CHIP_FORTRESS)),
+CHIP_FRACTURE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_FRACTURE], canTargetCellWith(CHIP_FRACTURE)),
 CHIP_HEALER_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_HEALER_BULB, getSelf(state)[POS]);
 },
-CHIP_HELMET : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_HELMET)),
-CHIP_ICE : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_ICE)),
-CHIP_ICEBERG : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_ICEBERG)),
+CHIP_HELMET : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_HELMET], canTargetCellWith(CHIP_HELMET)),
+CHIP_ICE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_ICE], canTargetCellWith(CHIP_ICE)),
+CHIP_ICEBERG : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_ICEBERG], AREA_CIRCLE_2), canTargetCellWith(CHIP_ICEBERG)),
 CHIP_ICED_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_ICED_BULB, getSelf(state)[POS]);
 },
-CHIP_INVERSION : getSingleTargets(anyEntity, canTargetCellWith(CHIP_INVERSION)),
-CHIP_LEATHER_BOOTS : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_LEATHER_BOOTS)),
-CHIP_LIBERATION : getSingleTargets(entityToBeLiberated, canTargetCellWith(CHIP_LIBERATION)),
-CHIP_LIGHTNING : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_LIGHTNING)),
+CHIP_INVERSION : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_INVERSION], canTargetCellWith(CHIP_INVERSION)),
+CHIP_LEATHER_BOOTS : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_LEATHER_BOOTS], canTargetCellWith(CHIP_LEATHER_BOOTS)),
+CHIP_LIBERATION : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_LIBERATION], canTargetCellWith(CHIP_LIBERATION)),
+CHIP_LIGHTNING : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_LIGHTNING], AREA_CIRCLE_2), canTargetCellWith(CHIP_LIGHTNING)),
 CHIP_LIGHTNING_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_LIGHTNING_BULB, getSelf(state)[POS]);
 },
-CHIP_LOAM : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_LOAM)),
+CHIP_LOAM : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_LOAM], canTargetCellWith(CHIP_LOAM)),
 CHIP_METALLIC_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_METALLIC_BULB, getSelf(state)[POS]);
 },
-CHIP_METEORITE : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_METEORITE)),
-CHIP_MIRROR : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_2), canTargetCellWith(CHIP_MIRROR)),
-CHIP_MOTIVATION : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_MOTIVATION)),
-CHIP_PEBBLE : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_PEBBLE)),
-CHIP_PLAGUE : getAreaTargets(prepareArea(leekToBeKilled, AREA_CIRCLE_3), canTargetCellWith(CHIP_PLAGUE)),
-CHIP_PROTEIN : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_PROTEIN)),
+CHIP_METEORITE : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_METEORITE], AREA_CIRCLE_2), canTargetCellWith(CHIP_METEORITE)),
+CHIP_MIRROR : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_MIRROR], AREA_CIRCLE_2), canTargetCellWith(CHIP_MIRROR)),
+CHIP_MOTIVATION : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_MOTIVATION], canTargetCellWith(CHIP_MOTIVATION)),
+CHIP_PEBBLE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_PEBBLE], canTargetCellWith(CHIP_PEBBLE)),
+CHIP_PLAGUE : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_PLAGUE], AREA_CIRCLE_3), canTargetCellWith(CHIP_PLAGUE)),
+CHIP_PROTEIN : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_PROTEIN], canTargetCellWith(CHIP_PROTEIN)),
 CHIP_PUNY_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_PUNY_BULB, getSelf(state)[POS]);
 },
-CHIP_RAGE : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_RAGE)),
-CHIP_RAMPART : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_RAMPART))
-CHIP_REFLEXES : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_REFLEXES)),
-CHIP_REGENERATION : getSingleTargets(leekToBeSaved, canTargetCellWith(CHIP_REGENERATION)),
-CHIP_REMISSION : getSingleTargets(bulbeToBeHealed, canTargetCellWith(CHIP_REMISSION)),
+CHIP_RAGE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_RAGE], canTargetCellWith(CHIP_RAGE)),
+CHIP_RAMPART : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_RAMPART], canTargetCellWith(CHIP_RAMPART))
+CHIP_REFLEXES : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_REFLEXES], canTargetCellWith(CHIP_REFLEXES)),
+CHIP_REGENERATION : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_REGENERATION], canTargetCellWith(CHIP_REGENERATION)),
+CHIP_REMISSION : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_REMISSION], canTargetCellWith(CHIP_REMISSION)),
 CHIP_RESURRECTION : CHIP_RESURRECTION,
-CHIP_ROCK : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_ROCK)),
-CHIP_ROCKFALL : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_ROCKFALL)),
+CHIP_ROCK : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_ROCK], canTargetCellWith(CHIP_ROCK)),
+CHIP_ROCKFALL : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_ROCKFALL], AREA_CIRCLE_2), canTargetCellWith(CHIP_ROCKFALL)),
 CHIP_ROCKY_BULB : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_ROCKY_BULB, getSelf(state)[POS]);
 },
-CHIP_SEVEN_LEAGUE_BOOTS : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_SEVEN_LEAGUE_BOOTS)),
-CHIP_SHIELD : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_SHIELD)),
-CHIP_SHOCK : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_SHOCK)),
-CHIP_SLOW_DOWN : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_SLOW_DOWN)),
-CHIP_SOLIDIFICATION : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_SOLIDIFICATION)),
-CHIP_SOPORIFIC : getAreaTargets(prepareArea(entityToBeKilled, AREA_CIRCLE_2), canTargetCellWith(CHIP_SOPORIFIC)),
-CHIP_SPARK : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_SPARK)),
-CHIP_STALACTITE : getSingleTargets(entityToBeKilled, canTargetCellWith(CHIP_STALACTITE)),
-CHIP_STEROID : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_STEROID)),
-CHIP_STRETCHING : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_STRETCHING)),
+CHIP_SEVEN_LEAGUE_BOOTS : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_SEVEN_LEAGUE_BOOTS], canTargetCellWith(CHIP_SEVEN_LEAGUE_BOOTS)),
+CHIP_SHIELD : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_SHIELD], canTargetCellWith(CHIP_SHIELD)),
+CHIP_SHOCK : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_SHOCK], canTargetCellWith(CHIP_SHOCK)),
+CHIP_SLOW_DOWN : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_SLOW_DOWN], canTargetCellWith(CHIP_SLOW_DOWN)),
+CHIP_SOLIDIFICATION : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_SOLIDIFICATION], canTargetCellWith(CHIP_SOLIDIFICATION)),
+CHIP_SOPORIFIC : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_SOPORIFIC], AREA_CIRCLE_2), canTargetCellWith(CHIP_SOPORIFIC)),
+CHIP_SPARK : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_SPARK], canTargetCellWith(CHIP_SPARK)),
+CHIP_STALACTITE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_STALACTITE], canTargetCellWith(CHIP_STALACTITE)),
+CHIP_STEROID : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_STEROID], canTargetCellWith(CHIP_STEROID)),
+CHIP_STRETCHING : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_STRETCHING], canTargetCellWith(CHIP_STRETCHING)),
 CHIP_TELEPORTATION : function(@state) {
 	return getCellsToUseChipOnCell(CHIP_TELEPORTATION, getSelf(state)[POS]);
 },
-CHIP_THORN : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_2), canTargetCellWith(CHIP_THORN)),
-CHIP_TOXIN : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_TOXIN)),
-CHIP_TRANQUILIZER : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_TRANQUILIZER)),
-CHIP_VACCINE : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_VACCINE)),
-CHIP_VENOM : getSingleTargets(leekToBeKilled, canTargetCellWith(CHIP_VENOM)),
-CHIP_WALL : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_WALL)),
-CHIP_WARM_UP : getSingleTargets(leekToBeHelped, canTargetCellWith(CHIP_WARM_UP)),
-CHIP_WHIP : getSingleTargets(bulbeToBeHelped, canTargetCellWith(CHIP_WHIP)),
-CHIP_WINGED_BOOTS : getAreaTargets(prepareArea(leekToBeHelped, AREA_CIRCLE_1), canTargetCellWith(CHIP_WINGED_BOOTS)),
+CHIP_THORN : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_THORN], AREA_CIRCLE_2), canTargetCellWith(CHIP_THORN)),
+CHIP_TOXIN : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_TOXIN], canTargetCellWith(CHIP_TOXIN)),
+CHIP_TRANQUILIZER : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_TRANQUILIZER], canTargetCellWith(CHIP_TRANQUILIZER)),
+CHIP_VACCINE : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_VACCINE], canTargetCellWith(CHIP_VACCINE)),
+CHIP_VENOM : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_VENOM], canTargetCellWith(CHIP_VENOM)),
+CHIP_WALL : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_WALL], canTargetCellWith(CHIP_WALL)),
+CHIP_WARM_UP : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_WARM_UP], canTargetCellWith(CHIP_WARM_UP)),
+CHIP_WHIP : getSingleTargets(ITEMS_TARGETING_AVAILABILITY[CHIP_WHIP], canTargetCellWith(CHIP_WHIP)),
+CHIP_WINGED_BOOTS : getAreaTargets(prepareArea(ITEMS_TARGETING_AVAILABILITY[CHIP_WINGED_BOOTS], AREA_CIRCLE_1), canTargetCellWith(CHIP_WINGED_BOOTS)),
 ];
 
 
@@ -4142,32 +4260,32 @@ function averageDmgFromLeeksOnCell(@p) { return function(@cell) { return functio
 };};}
 
 /**
-* getMLaserCellsTargetingCell : Cell -> [Cell]
+* getLinedCellsTargetingCell : Cell -> [Cell]
 */
-function getMLaserCellsTargetingCell(@cell) {
+function getLinedCellsTargetingCell(@cell, begin, end) {
 	var x = getCellX(cell);
 	var y = getCellY(cell);
 
 	var tcs = [];
-	for (var d = 1; d <= 12; d++) {
+	for (var d = 1; d <= end; d++) {
 		var c = getCellFromXY(x - d, y);
 		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
-		if (d >= 4) { push(tcs, c); }
+		if (d >= begin) { push(tcs, c); }
 	}
-	for (var d = 1; d <= 12; d++) {
+	for (var d = 1; d <= end; d++) {
 		var c = getCellFromXY(x, y - d);
 		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
-		if (d >= 4) { push(tcs, c); }
+		if (d >= begin) { push(tcs, c); }
 	}
-	for (var d = 1; d <= 12; d++) {
+	for (var d = 1; d <= end; d++) {
 		var c = getCellFromXY(x, y + d);
 		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
-		if (d >= 4) { push(tcs, c); }
+		if (d >= begin) { push(tcs, c); }
 	}
-	for (var d = 1; d <= 12; d++) {
+	for (var d = 1; d <= end; d++) {
 		var c = getCellFromXY(x + d, y);
 		if (c == null || getCellContent(c) == CELL_OBSTACLE) { break; }
-		if (d >= 4) { push(tcs, c); }
+		if (d >= begin) { push(tcs, c); }
 	}
 
 	return tcs;
@@ -4197,9 +4315,9 @@ function getElectrisorCellsTargetingCell(@cell, @ids) {
 }
 
 /**
-* getKatanaCellsTargetingCell : (State, Cell) -> [Cell]
+* getMeleeCellsTargetingCell : (State, Cell) -> [Cell]
 */
-function getKatanaCellsTargetingCell(@cell) {
+function getMeleeCellsTargetingCell(@cell) {
 	var x = getCellX(cell);
 	var y = getCellY(cell);
 
@@ -4209,8 +4327,6 @@ function getKatanaCellsTargetingCell(@cell) {
 	var bottomright = getCellFromXY(x + 1, y);
 
 	var ret = [];
-	var ids =@ getAliveAllies();
-	ids += getAliveEnemies();
 	if (topleft !== null && getCellContent(topleft) == CELL_OBSTACLE) {
 		push(ret, topleft);
 	}
@@ -4228,6 +4344,7 @@ function getKatanaCellsTargetingCell(@cell) {
 
 ///////////////////////////////////////////////////////////////////////////
 
+global opin_clone_state = 0, opout_clone_state = 0;
 global opin_move = 0, opout_move = 0;
 global opin_attack = 0, opout_attack = 0;
 global opin_select = 0, opout_select = 0;
@@ -4369,13 +4486,17 @@ function mutateActions(@actions, @baseState, @baseObstacles) {
 			finished = false;
 
 			var action;
-			var previousState = clonedState;
-			var previousObstacles = __obstacles;
-			var gameTuple = uctuple3([], @previousState, @previousObstacles);
+			//opin_clone_state = getOperations();
+			//var previousState = clonedState;
+			//opout_clone_state += getOperations() - opin_clone_state;
+			//var previousObstacles = __obstacles;
+			opin_clone_state = getOperations();
+			var gameTuple = ugtuple3([], clonedState, __obstacles);
+			opout_clone_state += getOperations() - opin_clone_state;
 			gameTuple(action, clonedState, __obstacles);
 
 			var list =@ getMove(clonedState);
-			list += list; // I want more chances to move.
+			// list += list; // I want more chances to move.
 			list += getAction(clonedState);
 
 			var curratedList =@ list;
@@ -4701,18 +4822,18 @@ function getDescription2(@state) {
 	xeDist = xeDist === null ? getCellDistance(spos, xs[enemy][POS]) : xeDist;
 	var directMLaser = 0, directElectrisor = 0, directKatana;
 	if (enemy !== null) {
-		var eacs =@ getlAccessibleCells(xs[enemy][MP] - 1)(xs[enemy][POS]);
+		var eacs =@ getlAccessibleCells(xs[enemy][MP])(xs[enemy][POS]);
 		var anyCell = aAny(function(@x) { return eacs[x] != null; });
 		if (inArray(xs[enemy][WEAPONS], WEAPON_M_LASER)) {
-			var ts =@ getMLaserCellsTargetingCell(spos);
+			var ts =@ getLinedCellsTargetingCell(spos, 2, 12);
 			directMLaser = anyCell(ts) ? 1 : 0;
 		}
 		if (inArray(xs[enemy][WEAPONS], WEAPON_ELECTRISOR)) {
 			var ts =@ getElectrisorCellsTargetingCell(spos, getAliveAllies() + getAliveEnemies());
 			directElectrisor = anyCell(ts) ? 1 : 0;
 		}
-		if (inArray(xs[enemy][WEAPONS], WEAPON_KATANA)) {
-			var ts =@ getKatanaCellsTargetingCell(spos);
+		if (inArray(xs[enemy][WEAPONS], WEAPON_KATANA) || inArray(xs[enemy][WEAPONS], WEAPON_AXE) || inArray(xs[enemy][WEAPONS], WEAPON_BROADSWORD)) {
+			var ts =@ getMeleeCellsTargetingCell(spos);
 			directKatana = anyCell(ts) ? 1 : 0;
 		}
 	}
@@ -4766,14 +4887,14 @@ function evaluateDescription2(@description) {
 	return evaluation;
 }
 
-global WEIGHTS2 = 	[ -40, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 5
+global WEIGHTS2 = 	[ -500, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 15
 					, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 5
-					, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 10
-					, -20000, -10000, -5
-					, 20, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -5
-					, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -10
+					, -5, -5, -5, -5, -5, -5, -5, -5, -15, -15, -5, 10
+					, -200000, -1000000, -5
+					, 500, 5, 5, 5, 5, 5, 5, 5, 15, 5, 5, -15
+					, 5, 5, 5, 5, 5, 5, 5, 5, 15, 15, 5, -10
 					, 5, 5, 30, 5, 5, 5, 5, 5, 5, 5, 5, -5
-					, 10000, 10, 5
+					, 200000, 1000000, 500
 					, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1
 					, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1
 					, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1
@@ -4783,8 +4904,9 @@ global WEIGHTS2 = 	[ -40, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, 5
 					, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1
 					, 1, 1, 1
 					, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1
-					, 500, 1, 1, -1, 20, -2, -80, -1
-					, -10000, -5000, -5000];
+					, 500, 1, 1, -1, 2000, -20, -150, -80
+					, -10000, -1000, -1000];
+					//, -1000000, -500000, -5000000];
 
 global ALL_IDS = getAllies() + getEnemies();
 
@@ -4802,6 +4924,8 @@ function main() {
 	var popInsert = pqmaxInsert(population);
 	var popSelect = pqmaxPop(population);
 
+	opin_clone_state = 0;
+	opout_clone_state = 0;
 	opin_move = 0;
 	opout_move = 0;
 	opin_attack = 0;
@@ -4812,11 +4936,13 @@ function main() {
 	opout_mutate = 0;
 	var opin_evaluate = 0, opout_evaluate = 0;
 	var opin_prio = 0, opout_prio = 0;
+	var best_score = log(0), best_score_from = "";
+	var exploration = 0, exploitation = 0;
 
 	var maxOp = 19000000;
 	var nbAncestors = 3;
-	var nbMutants = 2;
-	var nbNewcomers = 5;
+	var nbMutants = 0;
+	var nbNewcomers = 7;
 	var maxPop = nbAncestors + nbMutants + nbNewcomers;
 	while (getOperations() < maxOp && count(population) < maxPop) {
 		__obstacles = baseObstacles;
@@ -4832,6 +4958,11 @@ function main() {
 		// var value = evaluateState(getLastState(actions));
 		if (value === null) { continue; }
 		opout_evaluate += getOperations();
+		if (value > best_score) {
+			best_score = value;
+			best_score_from = "exploration";
+			exploration += 1;
+		}
 		totalPop++;
 		opin_prio += getOperations();
 		// popInsert(value, [actions, function(){ return description; }]);
@@ -4842,11 +4973,14 @@ function main() {
 	while (getOperations() < maxOp) {
 		var i = 0;
 		var ancestors =@ pqmaxTake(population)(nbAncestors);
+		population = [];
 		for (var ancestor in ancestors) {
 			var value;
 			var actions = ancestor(value);
 			popInsert(value, actions);
 		}
+		debug('--- ' + getOperations());
+		debug('--- ' + count(population));
 		while (getOperations() < maxOp && i < nbMutants) {
 			__obstacles = baseObstacles;
 			opin_mutate += getOperations();
@@ -4864,13 +4998,21 @@ function main() {
 			// var value = evaluateState(getLastState(actions));
 			if (value === null) { continue; }
 			opout_evaluate += getOperations();
+			if (value > best_score) {
+				best_score = value;
+				best_score_from = "exploitation";
+				exploitation += 1;
+			}
 			totalPop++;
 			opin_prio += getOperations();
 			// popInsert(value, [actions, function(){ return description; }]);
 			popInsert(value, actions);
 			opout_prio += getOperations();
 		}
+		debug(getOperations());
+		debug(count(population));
 		while (getOperations() < maxOp && count(population) < maxPop) {
+			debug('toto;');
 			__obstacles = baseObstacles;
 			opin_mutate += getOperations();
 			var actions =@ mutateActions([[]], gameState, baseObstacles);
@@ -4885,6 +5027,11 @@ function main() {
 			// var value = evaluateState(getLastState(actions));
 			if (value === null) { continue; }
 			opout_evaluate += getOperations();
+			if (value > best_score) {
+				best_score = value;
+				best_score_from = "exploration";
+				exploration += 1;
+			}
 			totalPop++;
 			opin_prio += getOperations();
 			// popInsert(value, [actions, function(){ return description; }]);
@@ -4898,10 +5045,14 @@ function main() {
 //		debugC((opout_mutate - opin_mutate) * 100 / OPERATIONS_LIMIT, 0);
 //		debugC((opout_evaluate - opin_evaluate) * 100 / OPERATIONS_LIMIT, BEST_COLOR);
 	//	debugC((opout_prio - opin_prio) * 100 / OPERATIONS_LIMIT, 0);
-		//debug("totalPop: " + totalPop);
+		debug("totalPop: " + totalPop);
 //		debug("total wasted attempt at targetting something: " + wastedTargettingAttempt);
 //		debug("ops: " + wastedTargettingAttemptOperations + "(" + (wastedTargettingAttemptOperations * 100 / OPERATIONS_LIMIT) + "%)");
 //		debug("totalOpActionList ops: " + totalOpActionList + "(" + (totalOpActionList * 100 / OPERATIONS_LIMIT) + "%)");
+		debug("totalOpCloneState ops: " + opout_clone_state + "(" + (opout_clone_state * 100 / OPERATIONS_LIMIT) + "%)");
+
+		debug("best_score_from: " + best_score_from);
+		debug("exploitation > " + exploitation + " : " + exploration + " < exploration");
 //		debug('');
 
 	var value;
